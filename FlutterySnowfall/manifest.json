@@ -1,0 +1,9 @@
+{
+    "Name": "Fluttery Snowfall",
+    "Author": "Spiderbuttons",
+    "Version": "1.0.0",
+    "Description": "A more peaceful, fluttery, and less eye-straining snowfall effect.",
+    "UniqueID": "Spiderbuttons.FlutterySnowfall",
+    "EntryDll": "FlutterySnowfall.dll",
+    "UpdateKeys": [ "Nexus:????" ]
+}
