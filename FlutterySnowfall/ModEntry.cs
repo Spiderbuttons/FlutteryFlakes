@@ -27,7 +27,7 @@ namespace FlutterySnowfall
             Harmony = new Harmony(ModManifest.UniqueID);
             
             Harmony.PatchAll();
-            AverageDebugTimings.Initialize(Harmony, 60);
+            AverageDebugTimings.Initialize(Harmony, 120);
 
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
@@ -70,6 +70,10 @@ namespace FlutterySnowfall
                 return;
             
             ScreenSnowManager.Value?.OnButtonPressed(e.Button);
+            if (e.Button is SButton.F2)
+            {
+                AverageDebugTimings.SetWindowSize(10000);
+            }
         }
     }
 }

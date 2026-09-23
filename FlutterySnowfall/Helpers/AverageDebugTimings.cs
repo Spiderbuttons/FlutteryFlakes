@@ -26,8 +26,8 @@ public static class AverageDebugTimings
     public static void Initialize(Harmony harmony, int windowSize)
     {
         _windowSize = windowSize;
-        DrawTimings = new Queue<double>(_windowSize);
-        UpdateTimings = new Queue<double>(_windowSize);
+        DrawTimings = new Queue<double>(_windowSize + 1);
+        UpdateTimings = new Queue<double>(_windowSize + 1);
         DrawTimingAccumulator = 0.0;
         UpdateTimingAccumulator = 0.0;
         DrawTimingAverage = 0.0;
@@ -45,6 +45,20 @@ public static class AverageDebugTimings
             original: AccessTools.Method(typeof(DebugTimings), nameof(DebugTimings.StopUpdateTimer)),
             postfix: new HarmonyMethod(typeof(AverageDebugTimings), nameof(DebugTimings_StopUpdateTimer_Postfix))
         );
+    }
+    
+    public static void ResetAllTimings()
+    {
+        ResetDrawTimings();
+        ResetUpdateTimings();
+    }
+
+    public static void SetWindowSize(int windowSize)
+    {
+        _windowSize = windowSize;
+        DrawTimings = new Queue<double>(_windowSize + 1);
+        UpdateTimings = new Queue<double>(_windowSize + 1);
+        ResetAllTimings();
     }
 
     private static void AddTiming(TimingType type, double time)
@@ -71,6 +85,20 @@ public static class AverageDebugTimings
             UpdateTimingAccumulator = accumulator;
             UpdateTimingAverage = accumulator / queue.Count;
         }
+    }
+    
+    private static void ResetDrawTimings()
+    {
+        DrawTimings.Clear();
+        DrawTimingAccumulator = 0.0;
+        DrawTimingAverage = 0.0;
+    }
+    
+    private static void ResetUpdateTimings() 
+    {
+        UpdateTimings.Clear();
+        UpdateTimingAccumulator = 0.0;
+        UpdateTimingAverage = 0.0;
     }
     
     private static void DebugTimings_Draw_Postfix(DebugTimings __instance)
