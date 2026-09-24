@@ -5,7 +5,7 @@ namespace FlutterySnowfall.Config;
 
 public sealed class ModConfig
 {
-    public bool Enabled { get; set; } = true;
+    public float SnowDensity { get; set; } = 0.05f;
 
     public ModConfig()
     {
@@ -14,7 +14,7 @@ public sealed class ModConfig
 
     private void Init()
     {
-        this.Enabled = true;
+        SnowDensity = 0.05f;
     }
 
     public void SetupConfig(IGenericModConfigMenuApi configMenu, IManifest ModManifest, IModHelper Helper)
@@ -24,13 +24,26 @@ public sealed class ModConfig
             reset: Init,
             save: () => Helper.WriteConfig(this)
         );
-
-        configMenu.AddBoolOption(
+        
+        configMenu.OnFieldChanged(
             mod: ModManifest,
-            name: () => "Enabled",
-            tooltip: () => "Enable or disable this mod.",
-            getValue: () => this.Enabled,
-            setValue: value => this.Enabled = value
+            onChange: (fieldId, newValue) =>
+            {
+                if (fieldId is "SnowDensity") ModEntry.ScreenSnowManager.Value?.SetTargetDensity((float)newValue);
+            }
+        );
+
+        configMenu.AddNumberOption(
+            mod: ModManifest,
+            name: () => "Snow Density",
+            tooltip: () => "The approximate percentage of the screen covered by snow during snowy weather.",
+            getValue: () => SnowDensity,
+            setValue: value => SnowDensity = value,
+            min: 0.01f,
+            max: 1.0f,
+            interval: 0.01f,
+            formatValue: value => $"{value:P00}",
+            fieldId: "SnowDensity"
         );
     }
 }

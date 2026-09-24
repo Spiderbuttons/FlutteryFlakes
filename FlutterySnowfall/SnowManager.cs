@@ -24,6 +24,13 @@ public class SnowManager
 
     private class Snowflake
     {
+        public static readonly FastNoiseLite Noise = new(696969);
+        static Snowflake()
+        {
+            Noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
+            Noise.SetFrequency(0.005f);
+        }
+        
         private int GridCellKey = -1;
         
         private Vector2 Position;
@@ -34,11 +41,13 @@ public class SnowManager
 
         private readonly float _scale;
         private readonly float _rotationSpeed;
+        private uint _noiseCoord;
 
         public Snowflake(int flakeType, Vector2 position, Vector2 speed, float scale, float rotationSpeed)
         {
             _scale = scale;
             _rotationSpeed = rotationSpeed;
+            _noiseCoord = (uint)Game1.random.Next(0, int.MaxValue);
             Position = position;
             Speed = speed;
             SourceRect = Game1.getSquareSourceRectForNonStandardTileSheet(_snowTexture, 6, 6, flakeType);
@@ -53,7 +62,7 @@ public class SnowManager
             CalculateGridCellKey();
         }
 
-        private void CalculateGridCellKey()
+        public void CalculateGridCellKey()
         {
             int gridWidth = SnowflakeCell.GetGridCellWidth();
             int gridHeight = SnowflakeCell.GetGridCellHeight();
@@ -73,21 +82,33 @@ public class SnowManager
             Vector2 screenPos = Game1.GlobalToLocal(Position);
             if (!Game1.viewport.ToXna().ContainsWithMargin(Position, 8)) return;
             
-            b.Draw(_snowTexture, screenPos, SourceRect, Color.White, Rotation, Origin, _scale, SpriteEffects.None, 1f);
+            b.Draw(_snowTexture, screenPos, SourceRect, Color.Lerp(Color.AliceBlue, Color.LightSkyBlue, 0.05f), Rotation, Origin, _scale, SpriteEffects.None, 1f);
         }
 
         public bool Update(GameTime time)
         {
-            // Speed = new Vector2(Speed.X, Speed.Y - 0.1f * (float)time.ElapsedGameTime.TotalSeconds);
-            Position += Speed * (float)time.ElapsedGameTime.TotalSeconds;
-            Rotation += _rotationSpeed * (float)time.ElapsedGameTime.TotalSeconds;
-
-            CalculateGridCellKey();
             if (!ModEntry.ScreenSnowManager.Value!.SnowflakeGrid.TryGetValue(GridCellKey, out var cell))
             {
                 return true;
             }
+
+            Noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
+            Noise.SetFrequency(0.0065f);
+            Noise.SetSeed(69);
+            var noiseValue = Noise.GetNoise(Position.X, _noiseCoord);
+            float perlinSpeed = (noiseValue + 1) / 2;
+
+
+            Position.X += (Speed.X + Speed.X * noiseValue) * (float)time.ElapsedGameTime.TotalSeconds * (HighFramerate ? 1f : 2f);
+            Position.Y += Speed.Y * (float)time.ElapsedGameTime.TotalSeconds * (HighFramerate ? 1f : 2f);
+            Rotation += (_rotationSpeed + _rotationSpeed * (perlinSpeed / perlinSpeed)) * (float)time.ElapsedGameTime.TotalSeconds;
             
+            CalculateGridCellKey();
+            if (!ModEntry.ScreenSnowManager.Value!.SnowflakeGrid.TryGetValue(GridCellKey, out cell))
+            {
+                return true;
+            }
+
             Rectangle cellBounds = Game1.GlobalToLocal(Game1.viewport, cell.Bounds());
             return !cellBounds.Contains(Game1.GlobalToLocal(Game1.viewport, Position));
         }
@@ -123,7 +144,7 @@ public class SnowManager
         public void AddSnowflake()
         {
             Vector2 position = new Vector2(Game1.random.Next(Bounds().Left, Bounds().Right), Game1.random.Next(Bounds().Top, Bounds().Bottom));
-            Vector2 speed = new Vector2(-(float)(Game1.random.NextDouble() * 50.0 + 50.0), (float)(Game1.random.NextDouble() * 20.0 + 20.0));
+            Vector2 speed = new Vector2(-(float)(Game1.random.NextDouble() * 20.0 + 30.0), (float)(Game1.random.NextDouble() * 20.0 + 10.0));
             float scale = (float)(Game1.random.NextDouble() * 2.5f + 1f);
             float rotationSpeed = (float)(Game1.random.NextDouble() * 2.0 - 1.0);
             
@@ -142,31 +163,37 @@ public class SnowManager
             MaxFlakes = 0;
         }
 
+        public void ResetInitialFill()
+        {
+            _initialFill = false;
+        }
+
         public void Update()
         {
             MaxFlakes = Math.Max(MaxFlakes, Snowflakes.Count);
             for (int i = Snowflakes.Count - 1; i >= 0; i--)
             {
                 var flake = Snowflakes[i];
-                if (flake.Update(Game1.currentGameTime))
+                int cellKey = flake.GetGridCellKey();
+                if (cellKey != cellId)
                 {
                     Snowflakes.RemoveAt(i);
+                    if (cellKey is >= 0 and <= 69)
+                    {
+                        ModEntry.ScreenSnowManager.Value!.SnowflakeGrid[cellKey].AddSnowflake(flake);
+                    }
+
                     continue;
                 }
 
-                int cellKey = flake.GetGridCellKey();
-                if (cellKey == cellId) continue;
-                
-                
-                Snowflakes.RemoveAt(i);
-                if (cellKey is >= 0 and <= 69)
+                if (flake.Update(Game1.currentGameTime))
                 {
-                    ModEntry.ScreenSnowManager.Value!.SnowflakeGrid[cellKey].AddSnowflake(flake);
+                    Snowflakes.RemoveAt(i);
                 }
             }
             
-            // Only wanna fill the ones on screen if they have literally 0 snowflakes. Like when the weather starts.
-            if (!_initialFill && Snowflakes.Count == 0)
+            // Only wanna fill the ones on screen if they were just created or the weather just started.
+            if (!_initialFill && GetSnowflakeDensity() < TargetDensity)
             {
                 FillToTargetDensity(TargetDensity);
                 _initialFill = true;
@@ -240,8 +267,18 @@ public class SnowManager
     }
 
     private readonly Dictionary<int, SnowflakeCell> SnowflakeGrid = [];
+    
+    private static float? _targetDensity;
+    private static float TargetDensity
+    {
+        get => _targetDensity ??= ModEntry.Config.SnowDensity;
+        set => _targetDensity = value;
+    }
 
-    private static float TargetDensity => 0.0075f;
+    private bool IsConfiguring => ModEntry.GMCM?.TryGetCurrentMenu(out IManifest? mod, out _) == true && mod?.UniqueID == ModEntry.UNIQUE_ID;
+    private bool ShouldPreviewSnow => IsConfiguring;
+    private static bool HighFramerate => true;
+
 
     public SnowManager()
     {
@@ -253,14 +290,24 @@ public class SnowManager
 
     private bool ShouldSnowHere()
     {
-        return true;
+        return (Context.IsWorldReady && Game1.currentLocation.IsOutdoors && Game1.currentLocation.IsSnowingHere()) || ShouldPreviewSnow;
     }
-    
-    private void ClearSnowflakes()
+
+    public void ClearSnowflakes()
     {
         foreach (var cell in SnowflakeGrid.Values)
         {
             cell.ClearSnowflakes();
+            cell.ResetInitialFill();
+        }
+    }
+    
+    public void SetTargetDensity(float newDensity)
+    {
+        TargetDensity = newDensity;
+        foreach (var cell in SnowflakeGrid.Values)
+        {
+            cell.ResetInitialFill();
         }
     }
 
@@ -268,7 +315,7 @@ public class SnowManager
     {
         if (!ShouldSnowHere()) return;
         
-        b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.viewport.Width, Game1.viewport.Height), Color.AliceBlue * 0.1f);
+        b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.viewport.Width, Game1.viewport.Height), Color.AliceBlue * 0.15f);
 
         b.End();
         b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
@@ -286,8 +333,9 @@ public class SnowManager
     {
         if (!ShouldSnowHere()) return;
         
-        var tickParity = (int)(Game1.currentGameTime.TotalGameTime.Ticks % 2);
-        for (int i = 0 + tickParity, n = SnowflakeGrid.Count; i < n; i += 2)
+        var tickParity = HighFramerate ? 0 : (int)(Game1.currentGameTime.TotalGameTime.Ticks % 2);
+        var increment = HighFramerate ? 1 : 2;
+        for (int i = 0 + tickParity, n = SnowflakeGrid.Count; i < n; i += increment)
         {
             SnowflakeGrid[i].Update();
         }
@@ -295,7 +343,12 @@ public class SnowManager
     
     public void OnWarped(GameLocation? newLocation)
     {
-        // LocationSizeInPixels = newLocation?.PixelSize() ?? Size.Zero;
+        Log.Info(newLocation?.Name);
+        foreach (var cell in SnowflakeGrid.Values)
+        {
+            cell.ResetInitialFill();
+        }
+        Snowflake.Noise.SetSeed(Game1.random.Next());
     }
 
     public void OnButtonPressed(SButton button)
@@ -304,6 +357,9 @@ public class SnowManager
         {
             ClearSnowflakes();
             Log.Warn(SnowflakeGrid[11].Bounds());
+            int newSeed = Game1.random.Next();
+            Snowflake.Noise.SetSeed(newSeed);
+            Log.Info($"New noise seed: {newSeed}");
         }
 
         if (button is SButton.MouseLeft)
