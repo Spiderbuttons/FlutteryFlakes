@@ -32,7 +32,7 @@ namespace FlutterySnowfall
         internal static readonly PerScreen<SnowManager?> PreviewManager = new();
 
         private static Texture2D? NoiseDemo;
-        private static FastNoiseLite Noise = new(69);
+        private static readonly FastNoiseLite Noise = new(69);
 
         public override void Entry(IModHelper helper)
         {
@@ -48,6 +48,10 @@ namespace FlutterySnowfall
                 original: AccessTools.Method(typeof(Game1), nameof(Game1.drawWeather)),
                 transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Game1_drawWeather_Transpiler)){ priority = Priority.First }
             );
+            Harmony.Patch(
+                original: AccessTools.Method(typeof(Game1), nameof(Game1.updateViewportForScreenSizeChange)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Game1_updateViewportForScreenSizeChange_Postfix))
+            );
             
             AverageDebugTimings.Initialize(Harmony, 120);
 
@@ -58,6 +62,7 @@ namespace FlutterySnowfall
             Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
             Helper.Events.Display.RenderedWorld += OnRenderedWorld;
             Helper.Events.Display.RenderedStep += OnRenderedStep;
+            Helper.Events.Display.MenuChanged += OnMenuChanged;
         }
 
         private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
@@ -110,6 +115,11 @@ namespace FlutterySnowfall
 
             // ScreenSnowManager.Value?.Draw(e.SpriteBatch);
         }
+        
+        private void OnMenuChanged(object? sender, MenuChangedEventArgs e)
+        {
+            if (e.NewMenu is null) PreviewManager.Value = null;
+        }
 
         private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
@@ -141,6 +151,16 @@ namespace FlutterySnowfall
                     }
                 }
                 NoiseDemo.SetData(noiseColors);
+            }
+        }
+
+        private static void Game1_updateViewportForScreenSizeChange_Postfix(int width, int height)
+        {
+            bool sizeDirty = Game1.viewport.Width != width || Game1.viewport.Height != height;
+            if (sizeDirty)
+            {
+                ScreenSnowManager.Value?.ResetCells(false);
+                PreviewManager.Value?.ResetCells(false);
             }
         }
 

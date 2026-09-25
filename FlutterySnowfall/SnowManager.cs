@@ -158,8 +158,8 @@ public class SnowManager
                 return true;
             }
 
-            Rectangle cellBounds = Game1.GlobalToLocal(Game1.uiViewport, cell.Bounds());
-            return !cellBounds.Contains(Game1.GlobalToLocal(Game1.uiViewport, Position));
+            Rectangle cellBounds = Game1.GlobalToLocal(Game1.viewport, cell.Bounds());
+            return !cellBounds.Contains(Game1.GlobalToLocal(Game1.viewport, Position));
         }
     }
 
@@ -185,7 +185,7 @@ public class SnowManager
                 width: gridWidth,
                 height: gridHeight
             );
-            return local ? localRectangle : LocalToGlobal(Game1.uiViewport, localRectangle);
+            return local ? localRectangle : LocalToGlobal(Game1.viewport, localRectangle);
         }
 
         public void AddSnowflake()
