@@ -16,8 +16,8 @@ public sealed class ModConfig
     public SnowManager.MovementType MovementType { get; set; } = SnowManager.MovementType.Noisy;
     public bool HighFramerate { get; set; }
     
-    public Color SnowflakeColour { get; set; } = Color.White;
-    public int SnowflakeColourVariance { get; set; } = 5;
+    public Color SnowflakeColour { get; set; } = new Color(238, 238, 255);
+    public int SnowflakeColourVariance { get; set; } = 30;
     public Color FogColour { get; set; } = new(240, 248, 255, 38);
 
     public ModConfig()
@@ -27,15 +27,18 @@ public sealed class ModConfig
 
     private void Init()
     {
-        PreviewSnowflakes = false;
         SnowDensity = 0.05f;
         ScaleMultiplier = 1f;
         WindSpeedMultiplier = 1f;
         RotationSpeedMultiplier = 1f;
         MovementType = SnowManager.MovementType.Noisy;
-        SnowflakeColour = Color.White;
+        SnowflakeColour = new Color(238, 238, 255);
+        SnowflakeColourVariance = 30;
         FogColour = new Color(240, 248, 255, 38);
         HighFramerate = false;
+        
+        ModEntry.PreviewManager.Value?.ResetConfigurationVariables();
+        ModEntry.PreviewManager.Value?.ResetCells(clearSnowflakes: false);
     }
 
     public void SetupConfig(IGenericModConfigMenuApi configMenu, IManifest ModManifest, IModHelper Helper)
