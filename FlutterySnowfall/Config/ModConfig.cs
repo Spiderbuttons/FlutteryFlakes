@@ -9,7 +9,7 @@ namespace FlutterySnowfall.Config;
 public sealed class ModConfig
 {
     public bool PreviewSnowflakes { get; set; }
-    public float SnowDensity { get; set; } = 0.05f;
+    public float SnowDensity { get; set; } = 0.01f;
     public float ScaleMultiplier { get; set; } = 1f;
     public float WindSpeedMultiplier { get; set; } = 1f;
     public float RotationSpeedMultiplier { get; set; } = 1f;
@@ -27,7 +27,7 @@ public sealed class ModConfig
 
     private void Init()
     {
-        SnowDensity = 0.05f;
+        SnowDensity = 0.01f;
         ScaleMultiplier = 1f;
         WindSpeedMultiplier = 1f;
         RotationSpeedMultiplier = 1f;

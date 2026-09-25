@@ -166,12 +166,14 @@ public class SnowManager
     private class SnowflakeCell(SnowManager Manager, int CellId)
     {
         private const float AverageFlakeScale = 3.5f / 2f;
+        private const float AverageFlakeArea = AverageFlakeScale * AverageFlakeScale;
+        private const int SourceRectArea = 36;
 
         private readonly List<Snowflake> Snowflakes = [];
         private bool _initialFill;
         
         public int SnowflakeCount => Snowflakes.Count;
-        private int TotalSnowflakeArea => (int)(Snowflakes.Count * AverageFlakeScale * AverageFlakeScale * 36);
+        private int TotalSnowflakeArea => (int)(Snowflakes.Count * AverageFlakeArea * SourceRectArea);
 
         public Rectangle Bounds(bool local = false)
         {

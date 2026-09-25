@@ -156,12 +156,8 @@ namespace FlutterySnowfall
 
         private static void Game1_updateViewportForScreenSizeChange_Postfix(int width, int height)
         {
-            bool sizeDirty = Game1.viewport.Width != width || Game1.viewport.Height != height;
-            if (sizeDirty)
-            {
-                ScreenSnowManager.Value?.ResetCells(false);
-                PreviewManager.Value?.ResetCells(false);
-            }
+            ScreenSnowManager.Value?.ResetCells(false);
+            PreviewManager.Value?.ResetCells(false);
         }
 
         private static IEnumerable<CodeInstruction> Game1_drawWeather_Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
