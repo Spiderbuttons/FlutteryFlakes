@@ -22,15 +22,26 @@ public class SnowManager
         }
     }
 
+    public enum MovementType
+    {
+        Consistent,
+        Varied,
+        Noisy
+    }
+
     private class Snowflake
     {
-        public static readonly FastNoiseLite Noise = new(696969);
+        public static readonly FastNoiseLite Noise = new(69);
         static Snowflake()
         {
             Noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-            Noise.SetFrequency(0.005f);
+            Noise.SetFrequency(0.0065f);
         }
-        
+
+        public static readonly Vector2 ConsistentSpeed = new(-40, 20);
+
+        private readonly SnowManager Manager;
+
         private int GridCellKey = -1;
         
         private Vector2 Position;
@@ -42,12 +53,17 @@ public class SnowManager
         private readonly float _scale;
         private readonly float _rotationSpeed;
         private uint _noiseCoord;
+        private float _colourVarianceFactor;
 
-        public Snowflake(int flakeType, Vector2 position, Vector2 speed, float scale, float rotationSpeed)
+        public Snowflake(SnowManager manager, int flakeType, Vector2 position, Vector2 speed, float scale, float rotationSpeed)
         {
+            Manager = manager;
+            
             _scale = scale;
             _rotationSpeed = rotationSpeed;
             _noiseCoord = (uint)Game1.random.Next(0, int.MaxValue);
+            _colourVarianceFactor = Game1.random.Next(-100, 100) / 100f;
+            
             Position = position;
             Speed = speed;
             SourceRect = Game1.getSquareSourceRectForNonStandardTileSheet(_snowTexture, 6, 6, flakeType);
@@ -77,79 +93,112 @@ public class SnowManager
             return GridCellKey;
         }
 
+        private Vector2 GetMovementSpeed()
+        {
+            Vector2 baseSpeed = Manager.SnowMovementType is MovementType.Consistent ? ConsistentSpeed : Speed;
+            float variedSpeed = 0;
+            if (Manager.SnowMovementType is MovementType.Noisy)
+            {
+                variedSpeed = Noise.GetNoise(Position.X, _noiseCoord);
+            }
+            variedSpeed *= baseSpeed.X;
+
+            return new Vector2(baseSpeed.X + variedSpeed, baseSpeed.Y);
+        }
+        
+        private float GetRotationSpeed()
+        {
+            float variedSpeed = 0;
+            if (Manager.SnowMovementType is MovementType.Noisy)
+            {
+                variedSpeed = Noise.GetNoise(Position.X, _noiseCoord);
+                variedSpeed = (variedSpeed + 1) / 2;
+            }
+            if (variedSpeed is not 0) variedSpeed /= Math.Abs(variedSpeed);
+
+            return _rotationSpeed + _rotationSpeed * variedSpeed;
+        }
+
+        private Color GetDrawColour()
+        {
+            int colourToAdd = (int)(Manager.SnowflakeColourVariance * _colourVarianceFactor);
+            int r = Math.Clamp(Manager.SnowflakeColour.R + colourToAdd, 0, 255);
+            int g = Math.Clamp(Manager.SnowflakeColour.G + colourToAdd, 0, 255);
+            int b = Math.Clamp(Manager.SnowflakeColour.B + colourToAdd, 0, 255);
+            return new Color(r, g, b);
+        }
+
         public void Draw(SpriteBatch b)
         {
             Vector2 screenPos = Game1.GlobalToLocal(Position);
-            if (!Game1.viewport.ToXna().ContainsWithMargin(Position, 8)) return;
-            
-            b.Draw(_snowTexture, screenPos, SourceRect, Color.Lerp(Color.AliceBlue, Color.LightSkyBlue, 0.05f), Rotation, Origin, _scale, SpriteEffects.None, 1f);
+            Rectangle referenceViewport = ShouldPreviewSnow ? Game1.uiViewport.ToXna() : Game1.viewport.ToXna();
+            if (!referenceViewport.ContainsWithMargin(Position, 8)) return;
+
+            Color drawColour = GetDrawColour() * Manager.SnowflakeAlpha;
+            b.Draw(_snowTexture, screenPos, SourceRect, drawColour, Rotation, Origin, _scale * Manager.ScaleMultiplier, SpriteEffects.None, 1f);
         }
 
         public bool Update(GameTime time)
         {
-            if (!ModEntry.ScreenSnowManager.Value!.SnowflakeGrid.TryGetValue(GridCellKey, out var cell))
+            if (!Manager.SnowflakeGrid.TryGetValue(GridCellKey, out var cell))
             {
                 return true;
             }
 
-            Noise.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-            Noise.SetFrequency(0.0065f);
-            Noise.SetSeed(69);
-            var noiseValue = Noise.GetNoise(Position.X, _noiseCoord);
-            float perlinSpeed = (noiseValue + 1) / 2;
-
-
-            Position.X += (Speed.X + Speed.X * noiseValue) * (float)time.ElapsedGameTime.TotalSeconds * (HighFramerate ? 1f : 2f);
-            Position.Y += Speed.Y * (float)time.ElapsedGameTime.TotalSeconds * (HighFramerate ? 1f : 2f);
-            Rotation += (_rotationSpeed + _rotationSpeed * (perlinSpeed / perlinSpeed)) * (float)time.ElapsedGameTime.TotalSeconds;
+            Vector2 movement = GetMovementSpeed();
+            float rotationSpeed = GetRotationSpeed();
+            float timeFactor = (float)time.ElapsedGameTime.TotalSeconds * (Manager.HighFramerate ? 1f : 2f);
+            Position.X += movement.X * timeFactor * Manager.WindSpeedMultiplier;
+            Position.Y += movement.Y * timeFactor * Manager.WindSpeedMultiplier;
+            Rotation += rotationSpeed * timeFactor * Manager.RotationSpeedMultiplier;
             
             CalculateGridCellKey();
-            if (!ModEntry.ScreenSnowManager.Value!.SnowflakeGrid.TryGetValue(GridCellKey, out cell))
+            if (!Manager.SnowflakeGrid.TryGetValue(GridCellKey, out cell))
             {
                 return true;
             }
 
-            Rectangle cellBounds = Game1.GlobalToLocal(Game1.viewport, cell.Bounds());
-            return !cellBounds.Contains(Game1.GlobalToLocal(Game1.viewport, Position));
+            Rectangle cellBounds = Game1.GlobalToLocal(Game1.uiViewport, cell.Bounds());
+            return !cellBounds.Contains(Game1.GlobalToLocal(Game1.uiViewport, Position));
         }
     }
 
-    private class SnowflakeCell(int cellId)
+    private class SnowflakeCell(SnowManager Manager, int CellId)
     {
         private const float AverageFlakeScale = 3.5f / 2f;
-        
+
         private readonly List<Snowflake> Snowflakes = [];
         private bool _initialFill;
         
         public int SnowflakeCount => Snowflakes.Count;
         private int TotalSnowflakeArea => (int)(Snowflakes.Count * AverageFlakeScale * AverageFlakeScale * 36);
-        
-        private int MaxFlakes;
 
         public Rectangle Bounds(bool local = false)
         {
             int gridWidth = GetGridCellWidth();
             int gridHeight = GetGridCellHeight();
-            int cellX = (cellId) % 10;
-            int cellY = (cellId) / 10;
+            int cellX = (CellId) % 10;
+            int cellY = (CellId) / 10;
             Rectangle localRectangle = new Rectangle(
                 x: cellX * gridWidth - gridWidth,
                 y: cellY * gridHeight - gridHeight,
                 width: gridWidth,
                 height: gridHeight
             );
-            return local ? localRectangle : LocalToGlobal(Game1.viewport, localRectangle);
+            return local ? localRectangle : LocalToGlobal(Game1.uiViewport, localRectangle);
         }
 
         public void AddSnowflake()
         {
+            float xSpeed = -(float)(Game1.random.NextDouble() * 20.0 + 30.0);
+            float ySpeed = (float)(Game1.random.NextDouble() * 20.0 + 10.0);
             Vector2 position = new Vector2(Game1.random.Next(Bounds().Left, Bounds().Right), Game1.random.Next(Bounds().Top, Bounds().Bottom));
-            Vector2 speed = new Vector2(-(float)(Game1.random.NextDouble() * 20.0 + 30.0), (float)(Game1.random.NextDouble() * 20.0 + 10.0));
+            Vector2 speed = new Vector2(xSpeed, ySpeed);
             float scale = (float)(Game1.random.NextDouble() * 2.5f + 1f);
             float rotationSpeed = (float)(Game1.random.NextDouble() * 2.0 - 1.0);
             
             int flakeType = Game1.random.Next(8);
-            Snowflakes.Add(new Snowflake(flakeType, position, speed, scale, rotationSpeed));
+            Snowflakes.Add(new Snowflake(Manager, flakeType, position, speed, scale, rotationSpeed));
         }
 
         public void AddSnowflake(Snowflake flake)
@@ -160,7 +209,6 @@ public class SnowManager
         public void ClearSnowflakes()
         {
             Snowflakes.Clear();
-            MaxFlakes = 0;
         }
 
         public void ResetInitialFill()
@@ -170,17 +218,26 @@ public class SnowManager
 
         public void Update()
         {
-            MaxFlakes = Math.Max(MaxFlakes, Snowflakes.Count);
+            while (!_initialFill && GetSnowflakeDensity() > Manager.TargetDensity)
+            {
+                if (Snowflakes.Count > 0)
+                {
+                    int indexToRemove = Game1.random.Next(Snowflakes.Count);
+                    Snowflakes.RemoveAt(indexToRemove);
+                }
+                else break;
+            }
+            
             for (int i = Snowflakes.Count - 1; i >= 0; i--)
             {
                 var flake = Snowflakes[i];
                 int cellKey = flake.GetGridCellKey();
-                if (cellKey != cellId)
+                if (cellKey != CellId)
                 {
                     Snowflakes.RemoveAt(i);
                     if (cellKey is >= 0 and <= 69)
                     {
-                        ModEntry.ScreenSnowManager.Value!.SnowflakeGrid[cellKey].AddSnowflake(flake);
+                        Manager.SnowflakeGrid[cellKey].AddSnowflake(flake);
                     }
 
                     continue;
@@ -193,16 +250,16 @@ public class SnowManager
             }
             
             // Only wanna fill the ones on screen if they were just created or the weather just started.
-            if (!_initialFill && GetSnowflakeDensity() < TargetDensity)
+            if (!_initialFill && GetSnowflakeDensity() < Manager.TargetDensity)
             {
-                FillToTargetDensity(TargetDensity);
+                FillToTargetDensity(Manager.TargetDensity);
                 _initialFill = true;
             }
             // Otherwise, we only wanna fill the edge cells to make sure the player doesn't stop seeing snowflakes when they move around.
             // This first elif handles the top and bottom rows.
-            else if (cellId is < 10 or > 59) FillToTargetDensity(TargetDensity / 2f); // I'm not really sure why this needs to be divided by 2, but there's way too much snow otherwise.
+            else if (CellId is < 10 or > 59) FillToTargetDensity(Manager.TargetDensity / 2f); // I'm not really sure why this needs to be divided by 2, but there's way too much snow otherwise.
             // This second elif handles the left and right rows.
-            else if (cellId % 10 == 0 || cellId % 10 == 9) FillToTargetDensity(TargetDensity / 2f);
+            else if (CellId % 10 == 0 || CellId % 10 == 9) FillToTargetDensity(Manager.TargetDensity / 2f);
         }
         
         private void FillToMinimumCount(int minCount)
@@ -244,78 +301,156 @@ public class SnowManager
             // b.DrawString(Game1.dialogueFont, densityText, textPosition, Color.White);
 
             // Other debug stuff
-            // Random rng = new Random(cellId);
+            // Random rng = new Random(CellId);
             // Color randomColor = new Color(rng.Next(256), rng.Next(256), rng.Next(256), 255);
-            // b.Draw(Game1.staminaRect, GlobalToLocal(Game1.viewport, Bounds()), randomColor * 0.15f);
-            // string countText = $"{Snowflakes.Count} / {MaxFlakes}";
+            // b.Draw(Game1.staminaRect, Bounds(true), randomColor * 0.5f);
+            // string countText = $"{Snowflakes.Count}";
             // Vector2 textSize = Game1.dialogueFont.MeasureString(countText);
-            // Rectangle localBounds = GlobalToLocal(Game1.viewport, Bounds());
+            // Rectangle localBounds = GlobalToLocal(Game1.uiViewport, Bounds());
             // Vector2 textPosition = new Vector2(localBounds.Center.X - textSize.X / 2, localBounds.Center.Y - textSize.Y / 2);
             // b.DrawString(Game1.dialogueFont, countText, textPosition - new Vector2(2, -2), Color.Black, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1f);
             // b.DrawString(Game1.dialogueFont, countText, textPosition, Color.White);
         }
         
         public static int GetGridCellWidth()
-        { 
-            return Game1.viewport.Width / 8;
+        {
+            return (ShouldPreviewSnow ? Game1.uiViewport.Width : Game1.viewport.Width) / 8;
         }
 
         public static int GetGridCellHeight()
         {
-            return Game1.viewport.Height / 5;
+            return (ShouldPreviewSnow ? Game1.uiViewport.Height : Game1.viewport.Height) / 5;
         }
     }
 
     private readonly Dictionary<int, SnowflakeCell> SnowflakeGrid = [];
     
-    private static float? _targetDensity;
-    private static float TargetDensity
+    private float? _targetDensity;
+    public float TargetDensity
     {
         get => _targetDensity ??= ModEntry.Config.SnowDensity;
         set => _targetDensity = value;
     }
+    
+    private float? _scaleMultiplier;
+    public float ScaleMultiplier
+    {
+        get => _scaleMultiplier ??= ModEntry.Config.ScaleMultiplier;
+        set => _scaleMultiplier = value;
+    }
+    
+    private float? _windSpeedMultiplier;
+    public float WindSpeedMultiplier
+    {
+        get => _windSpeedMultiplier ??= ModEntry.Config.WindSpeedMultiplier;
+        set => _windSpeedMultiplier = value;
+    }
+    
+    private float? _rotationSpeedMultiplier;
+    public float RotationSpeedMultiplier
+    {
+        get => _rotationSpeedMultiplier ??= ModEntry.Config.RotationSpeedMultiplier;
+        set => _rotationSpeedMultiplier = value;
+    }
+    
+    private MovementType? _snowMovementType;
+    public MovementType SnowMovementType
+    {
+        get => _snowMovementType ??= ModEntry.Config.MovementType;
+        set => _snowMovementType = value;
+    }
 
-    private bool IsConfiguring => ModEntry.GMCM?.TryGetCurrentMenu(out IManifest? mod, out _) == true && mod?.UniqueID == ModEntry.UNIQUE_ID;
-    private bool ShouldPreviewSnow => IsConfiguring;
-    private static bool HighFramerate => true;
+    private bool? _highFramerate;
+    public bool HighFramerate
+    {
+        get => _highFramerate ??= ModEntry.Config.HighFramerate;
+        set => _highFramerate = value;
+    }
+    
+    private Color? _snowflakeColour;
+    public Color SnowflakeColour
+    {
+        get => _snowflakeColour ??= new Color(ModEntry.Config.SnowflakeColour.R, ModEntry.Config.SnowflakeColour.G, ModEntry.Config.SnowflakeColour.B);
+        set => _snowflakeColour = new Color(value.R, value.G, value.B);
+    }
+    
+    private float? _snowflakeAlpha;
+    public float SnowflakeAlpha
+    {
+        get => _snowflakeAlpha ??= ModEntry.Config.SnowflakeColour.A / 255f;
+        set => _snowflakeAlpha = value;
+    }
+
+    private int? _snowflakeColourVariance;
+    public int SnowflakeColourVariance
+    {
+        get => _snowflakeColourVariance ??= ModEntry.Config.SnowflakeColourVariance;
+        set => _snowflakeColourVariance = value;
+    }
+    
+    private Color? _fogColour;
+    public Color FogColour
+    {
+        get => _fogColour ??= new Color(ModEntry.Config.FogColour.R, ModEntry.Config.FogColour.G, ModEntry.Config.FogColour.B);
+        set => _fogColour = new Color(value.R, value.G, value.B);
+    }
+    
+    private float? _fogAlpha;
+    public float FogAlpha
+    {
+        get => _fogAlpha ??= ModEntry.Config.FogColour.A / 255f;
+        set => _fogAlpha = value;
+    }
+
+    private static bool IsConfiguring => ModEntry.GMCM?.TryGetCurrentMenu(out IManifest? mod, out _) == true && mod?.UniqueID == ModEntry.UNIQUE_ID;
+    private static bool ShouldPreviewSnow => ModEntry.Config.PreviewSnowflakes && IsConfiguring;
 
 
     public SnowManager()
     {
         for (int i = 0; i < 70; i++)
         {
-            SnowflakeGrid[i] = new SnowflakeCell(i);
+            SnowflakeGrid[i] = new SnowflakeCell(this, i);
         }
     }
 
     private bool ShouldSnowHere()
     {
-        return (Context.IsWorldReady && Game1.currentLocation.IsOutdoors && Game1.currentLocation.IsSnowingHere()) || ShouldPreviewSnow;
+        if (IsConfiguring) return ShouldPreviewSnow;
+        return Context.IsWorldReady && Game1.currentLocation.IsOutdoors && Game1.currentLocation.IsSnowingHere();
     }
 
-    public void ClearSnowflakes()
+    public void ResetCells(bool clearSnowflakes = true)
     {
         foreach (var cell in SnowflakeGrid.Values)
         {
-            cell.ClearSnowflakes();
+            if (clearSnowflakes) cell.ClearSnowflakes();
             cell.ResetInitialFill();
         }
     }
-    
-    public void SetTargetDensity(float newDensity)
+
+    public void ResetConfigurationVariables()
     {
-        TargetDensity = newDensity;
-        foreach (var cell in SnowflakeGrid.Values)
-        {
-            cell.ResetInitialFill();
-        }
+        _targetDensity = null;
+        _scaleMultiplier = null;
+        _windSpeedMultiplier = null;
+        _rotationSpeedMultiplier = null;
+        _snowMovementType = null;
+        _highFramerate = null;
+        _snowflakeColour = null;
+        _snowflakeAlpha = null;
+        _snowflakeColourVariance = null;
+        _fogColour = null;
+        _fogAlpha = null;
     }
 
     public void Draw(SpriteBatch b)
     {
         if (!ShouldSnowHere()) return;
         
-        b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.viewport.Width, Game1.viewport.Height), Color.AliceBlue * 0.15f);
+        if (FogColour.A > 0) b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), FogColour * FogAlpha);
+        
+        if (SnowflakeColour.A <= 0) return;
 
         b.End();
         b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
@@ -355,7 +490,7 @@ public class SnowManager
     {
         if (button is SButton.F2)
         {
-            ClearSnowflakes();
+            ResetCells();
             Log.Warn(SnowflakeGrid[11].Bounds());
             int newSeed = Game1.random.Next();
             Snowflake.Noise.SetSeed(newSeed);

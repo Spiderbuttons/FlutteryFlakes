@@ -29,6 +29,7 @@ namespace FlutterySnowfall
         public static IGenericModConfigMenuApi? GMCM;
         
         internal static readonly PerScreen<SnowManager?> ScreenSnowManager = new();
+        internal static readonly PerScreen<SnowManager?> PreviewManager = new();
 
         private static Texture2D? NoiseDemo;
         private static FastNoiseLite Noise = new(69);
@@ -67,6 +68,7 @@ namespace FlutterySnowfall
 
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
+            PreviewManager.Value = null;
             ScreenSnowManager.Value = new SnowManager();
             ScreenSnowManager.Value!.OnWarped(Game1.player.currentLocation);
         }
@@ -79,16 +81,17 @@ namespace FlutterySnowfall
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
             ScreenSnowManager.Value?.Update();
+            PreviewManager.Value?.Update();
         }
 
         private void OnRenderedStep(object? sender, RenderedStepEventArgs e)
         {
-            if (e.Step is RenderSteps.World_Weather) ScreenSnowManager.Value?.Draw(e.SpriteBatch);
-            else if (e.Step is RenderSteps.Menu && GMCM?.TryGetCurrentMenu(out IManifest? mod, out _) == true && mod?.UniqueID == ModManifest.UniqueID)
+            if (e.Step is RenderSteps.Menu && GMCM?.TryGetCurrentMenu(out IManifest? mod, out _) == true && mod?.UniqueID == ModManifest.UniqueID)
             {
-                ScreenSnowManager.Value ??= new SnowManager();
-                ScreenSnowManager.Value.Draw(e.SpriteBatch);
+                PreviewManager.Value ??= new SnowManager();
+                PreviewManager.Value.Draw(e.SpriteBatch);
             }
+            else if (e.Step is RenderSteps.World_Weather) ScreenSnowManager.Value?.Draw(e.SpriteBatch);
         }
 
         private void OnRenderedWorld(object? sender, RenderedWorldEventArgs e)
@@ -117,7 +120,7 @@ namespace FlutterySnowfall
 
             if (e.Button is SButton.F2)
             {
-                AverageDebugTimings.SetWindowSize(10000);
+                AverageDebugTimings.SetWindowSize(240);
             }
 
             if (e.Button is SButton.F3)
