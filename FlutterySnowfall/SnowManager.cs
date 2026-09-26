@@ -187,7 +187,9 @@ public class SnowManager
                 width: gridWidth,
                 height: gridHeight
             );
-            return local ? localRectangle : LocalToGlobal(Game1.viewport, localRectangle);
+            var viewport = Game1.viewport;
+            if (Game1.game1.takingMapScreenshot) viewport = new xTile.Dimensions.Rectangle(0, 0, Game1.currentLocation?.PixelSize().Width ?? 0, Game1.currentLocation?.PixelSize().Height ?? 0);
+            return local ? localRectangle : LocalToGlobal(viewport, localRectangle);
         }
 
         private void AddSnowflake()
@@ -308,11 +310,13 @@ public class SnowManager
         
         public static int GetGridCellWidth()
         {
+            if (Game1.game1.takingMapScreenshot) return Game1.currentLocation?.PixelSize().Width / 8 ?? 0;
             return (ShouldPreviewSnow ? Game1.uiViewport.Width : Game1.viewport.Width) / 8;
         }
 
         public static int GetGridCellHeight()
         {
+            if (Game1.game1.takingMapScreenshot) return Game1.currentLocation?.PixelSize().Height / 5 ?? 0;
             return (ShouldPreviewSnow ? Game1.uiViewport.Height : Game1.viewport.Height) / 5;
         }
     }
@@ -448,8 +452,13 @@ public class SnowManager
     public void Draw(SpriteBatch b)
     {
         if (!ShouldSnowHere()) return;
-        
-        if (FogColour.A > 0) b.Draw(Game1.staminaRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), FogColour * FogAlpha);
+
+        if (FogColour.A > 0)
+        {
+            int width = Game1.game1.takingMapScreenshot ? Game1.currentLocation?.PixelSize().Width ?? 0 : Game1.uiViewport.Width;
+            int height = Game1.game1.takingMapScreenshot ? Game1.currentLocation?.PixelSize().Height ?? 0 : Game1.uiViewport.Height;
+            b.Draw(Game1.staminaRect, new Rectangle(0, 0, width, height), FogColour * FogAlpha);
+        }
         
         if (SnowflakeColour.A <= 0) return;
 
@@ -461,6 +470,12 @@ public class SnowManager
 
         for (int i = 0, n = SnowflakeGrid.Count; i < n; i++)
         {
+            // I don't like having to do this in Draw() but the function that takes the screenshot doesn't update things first.
+            if (Game1.game1.takingMapScreenshot)
+            {
+                SnowflakeGrid[i].ResetInitialFill();
+                SnowflakeGrid[i].Update();
+            }
             SnowflakeGrid[i].Draw(b);
         }
 
