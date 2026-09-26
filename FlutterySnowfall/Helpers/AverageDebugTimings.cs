@@ -113,17 +113,13 @@ public static class AverageDebugTimings
 
     private static void DebugTimings_StopDrawTimer_Postfix(DebugTimings __instance)
     {
-        if (__instance.Active && (Game1.game1?.IsMainInstance ?? false))
-        {
-            AddTiming(TimingType.Draw, __instance.LastTimingDraw);
-        }
+        if (!__instance.Active || !(Game1.game1?.IsMainInstance ?? false)) return;
+        AddTiming(TimingType.Draw, __instance.LastTimingDraw);
     }
     
     private static void DebugTimings_StopUpdateTimer_Postfix(DebugTimings __instance)
     {
-        if (__instance.Active && (Game1.game1?.IsMainInstance ?? false))
-        {
-            AddTiming(TimingType.Update, __instance.LastTimingUpdate);
-        }
+        if (!__instance.Active || !(Game1.game1?.IsMainInstance ?? false)) return;
+        AddTiming(TimingType.Update, __instance.LastTimingUpdate);
     }
 }

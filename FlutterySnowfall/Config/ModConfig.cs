@@ -15,9 +15,10 @@ public sealed class ModConfig
     public float RotationSpeedMultiplier { get; set; } = 1f;
     public SnowManager.MovementType MovementType { get; set; } = SnowManager.MovementType.Noisy;
     public bool HighFramerate { get; set; }
+    public bool PixelatedSnowflakes { get; set; } = true;
     
-    public Color SnowflakeColour { get; set; } = new Color(238, 238, 255);
-    public int SnowflakeColourVariance { get; set; } = 30;
+    public Color SnowflakeColour { get; set; } = new(238, 238, 255);
+    public int SnowflakeColourVariance { get; set; } = 20;
     public Color FogColour { get; set; } = new(240, 248, 255, 38);
 
     public ModConfig()
@@ -33,9 +34,10 @@ public sealed class ModConfig
         RotationSpeedMultiplier = 1f;
         MovementType = SnowManager.MovementType.Noisy;
         SnowflakeColour = new Color(238, 238, 255);
-        SnowflakeColourVariance = 30;
+        SnowflakeColourVariance = 20;
         FogColour = new Color(240, 248, 255, 38);
         HighFramerate = false;
+        PixelatedSnowflakes = true;
         
         ModEntry.PreviewManager.Value?.ResetConfigurationVariables();
         ModEntry.PreviewManager.Value?.ResetCells(clearSnowflakes: false);
@@ -52,6 +54,7 @@ public sealed class ModConfig
                 foreach (var (_, manager) in ModEntry.ScreenSnowManager.GetActiveValues())
                 {
                     manager?.ResetConfigurationVariables();
+                    manager?.ResetCells(clearSnowflakes: true);
                 }
             });
         
@@ -82,6 +85,9 @@ public sealed class ModConfig
                         break;
                     case "HighFramerate":
                         ModEntry.PreviewManager.Value?.HighFramerate = (bool)newValue;
+                        break;
+                    case "PixelatedSnowflakes":
+                        ModEntry.PreviewManager.Value?.PixelatedSnowflakes = (bool)newValue;
                         break;
                     case "SnowflakeRed":
                     case "SnowflakeGreen":
@@ -203,6 +209,15 @@ public sealed class ModConfig
             getValue: () => HighFramerate,
             setValue: value => HighFramerate = value,
             fieldId: "HighFramerate"
+        );
+        
+        configMenu.AddBoolOption(
+            mod: ModManifest,
+            name: () => "Pixelated Snowflakes",
+            tooltip: () => "If enabled, snowflakes will be drawn pixelated like the rest of the game. If disabled, they will be drawn with a smoother, non-pixelated look.",
+            getValue: () => PixelatedSnowflakes,
+            setValue: value => PixelatedSnowflakes = value,
+            fieldId: "PixelatedSnowflakes"
         );
         
         configMenu.AddPageLink(
