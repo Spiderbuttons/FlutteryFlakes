@@ -158,7 +158,8 @@ public class SnowManager
                 return true;
             }
 
-            Rectangle cellBounds = Game1.GlobalToLocal(Game1.viewport, cell.Bounds());
+            // Rectangle cellBounds = Game1.GlobalToLocal(Game1.viewport, cell.Bounds());
+            var cellBounds = cell.Bounds(local: true);
             return !cellBounds.Contains(Game1.GlobalToLocal(Game1.viewport, Position));
         }
     }
@@ -172,6 +173,8 @@ public class SnowManager
         private readonly List<Snowflake> Snowflakes = [];
         
         private bool _initialFill;
+        private Rectangle _localBounds;
+        private bool _localBoundsDirty;
         
         private int TotalSnowflakeArea => (int)(Snowflakes.Count * AverageFlakeArea * SourceRectArea);
 
@@ -329,13 +332,17 @@ public class SnowManager
         get
         {
             if (_targetDensity.HasValue) return _targetDensity.Value;
-            float density;
-            if (ModEntry.Config.SnowDensityVariance is 0) density = Math.Clamp(ModEntry.Config.SnowDensity, 0.01f, 0.9f);
+            if (ModEntry.Config.SnowDensityVariance is 0 || ModEntry.IsConfiguring(false))
+            {
+                _targetDensity = Math.Clamp(ModEntry.Config.SnowDensity, 0.01f, 0.9f);
+                return _targetDensity.Value;
+            }
             Random rng = Utility.CreateDaySaveRandom();
             float variance = (float)(rng.NextDouble() * 2 - 1) * ModEntry.Config.SnowDensityVariance;
-            density = Math.Clamp(ModEntry.Config.SnowDensity + variance, 0.01f, 0.9f);
+            var density = Math.Clamp(ModEntry.Config.SnowDensity + variance, 0.01f, 0.9f);
             if (Context.IsSplitScreen) density /= 2f;
-            return density;
+            _targetDensity = density;
+            return _targetDensity.Value;
         }
         set => _targetDensity = value;
     }
@@ -346,10 +353,15 @@ public class SnowManager
         get
         {
             if (_scaleMultiplier.HasValue) return _scaleMultiplier.Value;
-            if (ModEntry.Config.ScaleVariance is 0) return Math.Clamp(ModEntry.Config.ScaleMultiplier, 0.1f, 2f);
+            if (ModEntry.Config.ScaleVariance is 0)
+            {
+                _scaleMultiplier = Math.Clamp(ModEntry.Config.ScaleMultiplier, 0.1f, 2f);
+                return _scaleMultiplier.Value;
+            }
             Random rng = Utility.CreateDaySaveRandom();
             float variance = (float)(rng.NextDouble() * 2 - 1) * ModEntry.Config.ScaleVariance;
-            return Math.Clamp(ModEntry.Config.ScaleMultiplier + variance, 0.1f, 2f);
+            _scaleMultiplier = Math.Clamp(ModEntry.Config.ScaleMultiplier + variance, 0.1f, 2f);
+            return _scaleMultiplier.Value;
         }
         set => _scaleMultiplier = value;
     }
@@ -360,10 +372,15 @@ public class SnowManager
         get
         {
             if (_windSpeedMultiplier.HasValue) return _windSpeedMultiplier.Value;
-            if (ModEntry.Config.WindSpeedVariance is 0) return Math.Clamp(ModEntry.Config.WindSpeedMultiplier, 0.1f, 5f);
+            if (ModEntry.Config.WindSpeedVariance is 0)
+            {
+                _windSpeedMultiplier = Math.Clamp(ModEntry.Config.WindSpeedMultiplier, 0.1f, 5f);
+                return _windSpeedMultiplier.Value;
+            }
             Random rng = Utility.CreateDaySaveRandom();
             float variance = (float)(rng.NextDouble() * 2 - 1) * ModEntry.Config.WindSpeedVariance;
-            return Math.Clamp(ModEntry.Config.WindSpeedMultiplier + variance, 0.1f, 5f);
+            _windSpeedMultiplier = Math.Clamp(ModEntry.Config.WindSpeedMultiplier + variance, 0.1f, 5f);
+            return _windSpeedMultiplier.Value;
         }
         set => _windSpeedMultiplier = value;
     }

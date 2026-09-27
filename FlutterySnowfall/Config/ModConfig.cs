@@ -3,6 +3,7 @@ using FlutterySnowfall.Helpers;
 using GenericModConfigMenu;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
+using StardewValley;
 
 namespace FlutterySnowfall.Config;
 
@@ -76,21 +77,25 @@ public sealed class ModConfig
                     case "SnowDensity":
                         ModEntry.PreviewManager.Value?.TargetDensity = (float)newValue;
                         ModEntry.PreviewManager.Value?.ResetCells(clearSnowflakes: false);
+                        AverageDebugTimings.ResetAllTimings();
                         break;
                     case "ScaleMultiplier":
                         ModEntry.PreviewManager.Value?.ScaleMultiplier = (float)newValue;
                         break;
                     case "WindSpeedMultiplier":
                         ModEntry.PreviewManager.Value?.WindSpeedMultiplier = (float)newValue;
+                        AverageDebugTimings.ResetAllTimings();
                         break;
                     case "RotationSpeedMultiplier":
                         ModEntry.PreviewManager.Value?.RotationSpeedMultiplier = (float)newValue;
                         break;
                     case "MovementType":
                         ModEntry.PreviewManager.Value?.SnowMovementType = Enum.Parse<SnowManager.MovementType>((string)newValue);
+                        AverageDebugTimings.ResetAllTimings();
                         break;
                     case "HighFramerate":
                         ModEntry.PreviewManager.Value?.HighFramerate = (bool)newValue;
+                        AverageDebugTimings.ResetAllTimings();
                         break;
                     case "PixelatedSnowflakes":
                         ModEntry.PreviewManager.Value?.PixelatedSnowflakes = (bool)newValue;
@@ -132,6 +137,17 @@ public sealed class ModConfig
                         break;
                 }
             }
+        );
+        
+        configMenu.AddComplexOption(
+            mod: ModManifest,
+            name: () => "Performance Impact",
+            tooltip: () => "Measures how close you are to no longer being able to reach 60 FPS.",
+            draw: Problometer.Draw,
+            beforeMenuOpened: () => Game1.debugTimings.Active = true,
+            beforeMenuClosed: () => Game1.debugTimings.Active = false,
+            afterReset: AverageDebugTimings.ResetAllTimings,
+            height: () => (int)Game1.dialogueFont.MeasureString("Performance Impact:").Y
         );
         
         configMenu.AddBoolOption(

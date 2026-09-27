@@ -17,11 +17,11 @@ public static class AverageDebugTimings
 
     private static Queue<double> DrawTimings = [];
     private static double DrawTimingAccumulator;
-    private static double DrawTimingAverage;
+    public static double DrawTimingAverage;
     
     private static Queue<double> UpdateTimings = [];
     private static double UpdateTimingAccumulator;
-    private static double UpdateTimingAverage;
+    public static double UpdateTimingAverage;
 
     public static void Initialize(Harmony harmony, int windowSize)
     {
