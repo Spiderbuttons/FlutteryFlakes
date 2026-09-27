@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Text;
 using HarmonyLib;
 using GenericModConfigMenu;
 using FlutterySnowfall.Config;
@@ -20,12 +19,12 @@ namespace FlutterySnowfall
         internal static string UNIQUE_ID => Manifest.UniqueID;
         
         internal static IModHelper ModHelper { get; set; } = null!;
-        internal static IManifest Manifest { get; set; } = null!;
+        private static IManifest Manifest { get; set; } = null!;
         internal static IMonitor ModMonitor { get; set; } = null!;
         internal static ModConfig Config { get; set; } = null!;
         private static Harmony Harmony { get; set; } = null!;
-        
-        public static IGenericModConfigMenuApi? GMCM;
+
+        private static IGenericModConfigMenuApi? GMCM;
         
         internal static readonly PerScreen<SnowManager?> ScreenSnowManager = new();
         internal static readonly PerScreen<SnowManager?> PreviewManager = new();
@@ -58,18 +57,6 @@ namespace FlutterySnowfall
             Helper.Events.Display.RenderedStep += OnRenderedStep;
             Helper.Events.Display.MenuChanged += OnMenuChanged;
         }
-        
-        private void LogCommWarning()
-        {
-            StringBuilder commWarning = new StringBuilder();
-            commWarning.AppendLine();
-            commWarning.AppendLine(@"/* ----------------------------------------------------------------- *\");
-            commWarning.AppendLine(@"/*                                                                   *\");
-            commWarning.AppendLine(@"/*    This is a commissioned mod that has not yet been paid for!     *\");
-            commWarning.AppendLine(@"/*                                                                   *\");
-            commWarning.AppendLine(@"/* ----------------------------------------------------------------- *\");
-            Log.Alert(commWarning.ToString());
-        }
 
         internal static bool IsConfiguring(bool checkForPreview = true)
         {
@@ -78,7 +65,6 @@ namespace FlutterySnowfall
 
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
         {
-            LogCommWarning();
             ScreenSnowManager.Value?.ResetCells(clearSnowflakes: true, changeSeed: true);
         }
 

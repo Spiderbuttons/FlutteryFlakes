@@ -73,6 +73,7 @@ public sealed class ModConfig
                 {
                     case "PreviewSnowflakes":
                         PreviewSnowflakes = (bool)newValue;
+                        AverageDebugTimings.ResetAllTimings();
                         break;
                     case "SnowDensity":
                         ModEntry.PreviewManager.Value?.TargetDensity = (float)newValue;
