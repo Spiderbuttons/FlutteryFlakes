@@ -326,24 +326,48 @@ public class SnowManager
     private float? _targetDensity;
     public float TargetDensity
     {
-        get => _targetDensity ??= ModEntry.Config.SnowDensity;
+        get
+        {
+            if (_targetDensity.HasValue) return _targetDensity.Value;
+            float density;
+            if (ModEntry.Config.SnowDensityVariance is 0) density = Math.Clamp(ModEntry.Config.SnowDensity, 0.01f, 0.9f);
+            Random rng = Utility.CreateDaySaveRandom();
+            float variance = (float)(rng.NextDouble() * 2 - 1) * ModEntry.Config.SnowDensityVariance;
+            density = Math.Clamp(ModEntry.Config.SnowDensity + variance, 0.01f, 0.9f);
+            if (Context.IsSplitScreen) density /= 2f;
+            return density;
+        }
         set => _targetDensity = value;
     }
-    
+
     private float? _scaleMultiplier;
     public float ScaleMultiplier
     {
-        get => _scaleMultiplier ??= ModEntry.Config.ScaleMultiplier;
+        get
+        {
+            if (_scaleMultiplier.HasValue) return _scaleMultiplier.Value;
+            if (ModEntry.Config.ScaleVariance is 0) return Math.Clamp(ModEntry.Config.ScaleMultiplier, 0.1f, 2f);
+            Random rng = Utility.CreateDaySaveRandom();
+            float variance = (float)(rng.NextDouble() * 2 - 1) * ModEntry.Config.ScaleVariance;
+            return Math.Clamp(ModEntry.Config.ScaleMultiplier + variance, 0.1f, 2f);
+        }
         set => _scaleMultiplier = value;
     }
-    
+
     private float? _windSpeedMultiplier;
     public float WindSpeedMultiplier
     {
-        get => _windSpeedMultiplier ??= ModEntry.Config.WindSpeedMultiplier;
+        get
+        {
+            if (_windSpeedMultiplier.HasValue) return _windSpeedMultiplier.Value;
+            if (ModEntry.Config.WindSpeedVariance is 0) return Math.Clamp(ModEntry.Config.WindSpeedMultiplier, 0.1f, 5f);
+            Random rng = Utility.CreateDaySaveRandom();
+            float variance = (float)(rng.NextDouble() * 2 - 1) * ModEntry.Config.WindSpeedVariance;
+            return Math.Clamp(ModEntry.Config.WindSpeedMultiplier + variance, 0.1f, 5f);
+        }
         set => _windSpeedMultiplier = value;
     }
-    
+
     private float? _rotationSpeedMultiplier;
     public float RotationSpeedMultiplier
     {
@@ -424,13 +448,14 @@ public class SnowManager
         return Context.IsWorldReady && Game1.currentLocation.IsOutdoors && Game1.currentLocation.IsSnowingHere();
     }
 
-    public void ResetCells(bool clearSnowflakes = true)
+    public void ResetCells(bool clearSnowflakes = true, bool changeSeed = false)
     {
         foreach (var cell in SnowflakeGrid.Values)
         {
             if (clearSnowflakes) cell.ClearSnowflakes();
             cell.ResetInitialFill();
         }
+        if (changeSeed) Snowflake.Noise.SetSeed(Game1.random.Next());
     }
 
     public void ResetConfigurationVariables()
@@ -496,16 +521,6 @@ public class SnowManager
         {
             SnowflakeGrid[i].Update();
         }
-    }
-    
-    public void OnWarped(GameLocation? newLocation)
-    {
-        Log.Info(newLocation?.Name);
-        foreach (var cell in SnowflakeGrid.Values)
-        {
-            cell.ResetInitialFill();
-        }
-        Snowflake.Noise.SetSeed(Game1.random.Next());
     }
     
     public static Rectangle GlobalToLocal(xTile.Dimensions.Rectangle viewport, Rectangle globalPosition)

@@ -79,6 +79,7 @@ namespace FlutterySnowfall
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
         {
             LogCommWarning();
+            ScreenSnowManager.Value?.ResetCells(clearSnowflakes: true, changeSeed: true);
         }
 
         private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
@@ -91,12 +92,12 @@ namespace FlutterySnowfall
         {
             PreviewManager.Value = null;
             ScreenSnowManager.Value = new SnowManager();
-            ScreenSnowManager.Value!.OnWarped(Game1.player.currentLocation);
+            ScreenSnowManager.Value!.ResetCells(clearSnowflakes: true, changeSeed: true);
         }
         
         private void OnWarped(object? sender, WarpedEventArgs e)
         {
-            ScreenSnowManager.Value?.OnWarped(e.NewLocation);
+            ScreenSnowManager.Value?.ResetCells(clearSnowflakes: true, changeSeed: true);
         }
 
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)

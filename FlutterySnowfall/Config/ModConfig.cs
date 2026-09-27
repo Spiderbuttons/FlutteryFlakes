@@ -10,8 +10,11 @@ public sealed class ModConfig
 {
     public bool PreviewSnowflakes { get; set; }
     public float SnowDensity { get; set; } = 0.01f;
+    public float SnowDensityVariance { get; set; } = 0.05f;
     public float ScaleMultiplier { get; set; } = 1f;
+    public float ScaleVariance { get; set; } = 0.2f;
     public float WindSpeedMultiplier { get; set; } = 1f;
+    public float WindSpeedVariance { get; set; } = 0.2f;
     public float RotationSpeedMultiplier { get; set; } = 1f;
     public SnowManager.MovementType MovementType { get; set; } = SnowManager.MovementType.Noisy;
     public bool HighFramerate { get; set; }
@@ -29,8 +32,11 @@ public sealed class ModConfig
     private void Init()
     {
         SnowDensity = 0.01f;
+        SnowDensityVariance = 0.05f;
         ScaleMultiplier = 1f;
+        ScaleVariance = 0.2f;
         WindSpeedMultiplier = 1f;
+        WindSpeedVariance = 0.2f;
         RotationSpeedMultiplier = 1f;
         MovementType = SnowManager.MovementType.Noisy;
         SnowflakeColour = new Color(238, 238, 255);
@@ -152,6 +158,19 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
+            name: () => "Snow Density Variance",
+            tooltip: () => "How much the snow density can randomly increase or decrease from your chosen snow density setting on any given day.",
+            getValue: () => SnowDensityVariance,
+            setValue: value => SnowDensityVariance = value,
+            min: 0f,
+            max: 0.9f,
+            interval: 0.01f,
+            formatValue: value => $"{value:P00}",
+            fieldId: "SnowDensityVariance"
+        );
+        
+        configMenu.AddNumberOption(
+            mod: ModManifest,
             name: () => "Snowflake Scale",
             tooltip: () => "A multiplier for the size of snowflakes. Higher values will make snowflakes larger.",
             getValue: () => ScaleMultiplier,
@@ -165,6 +184,19 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
+            name: () => "Snowflake Scale Variance",
+            tooltip: () => "How much the scale of snowflakes can randomly increase or decrease from your chosen scale setting on any given day.",
+            getValue: () => ScaleVariance,
+            setValue: value => ScaleVariance = value,
+            min: 0f,
+            max: 2f,
+            interval: 0.01f,
+            formatValue: value => $"{value:F1}x",
+            fieldId: "ScaleVariance"
+        );
+        
+        configMenu.AddNumberOption(
+            mod: ModManifest,
             name: () => "Wind Speed",
             tooltip: () => "A multiplier for the speed of the implied wind. Higher values will make snowflakes move faster.",
             getValue: () => WindSpeedMultiplier,
@@ -174,6 +206,19 @@ public sealed class ModConfig
             interval: 0.1f,
             formatValue: value => $"{value:F1}x",
             fieldId: "WindSpeedMultiplier"
+        );
+        
+        configMenu.AddNumberOption(
+            mod: ModManifest,
+            name: () => "Wind Speed Variance",
+            tooltip: () => "How much the wind speed can randomly increase or decrease from your chosen wind speed setting on any given day.",
+            getValue: () => WindSpeedVariance,
+            setValue: value => WindSpeedVariance = value,
+            min: 0f,
+            max: 5f,
+            interval: 0.1f,
+            formatValue: value => $"{value:F1}x",
+            fieldId: "WindSpeedVariance"
         );
         
         configMenu.AddNumberOption(
