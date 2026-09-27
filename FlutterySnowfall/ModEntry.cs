@@ -104,7 +104,7 @@ namespace FlutterySnowfall
         {
             ScreenSnowManager.Value?.Update();
             if (IsConfiguring()) PreviewManager.Value?.Update();
-            else PreviewManager.Value = null;
+            else if (!IsConfiguring(false)) PreviewManager.Value = null;
         }
 
         private void OnRenderedStep(object? sender, RenderedStepEventArgs e)
