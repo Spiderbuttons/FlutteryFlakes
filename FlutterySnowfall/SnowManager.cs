@@ -157,8 +157,7 @@ public class SnowManager
             {
                 return true;
             }
-
-            // Rectangle cellBounds = Game1.GlobalToLocal(Game1.viewport, cell.Bounds());
+            
             var cellBounds = cell.Bounds(local: true);
             return !cellBounds.Contains(Game1.GlobalToLocal(Game1.viewport, Position));
         }
@@ -174,12 +173,20 @@ public class SnowManager
         
         private bool _initialFill;
         private Rectangle _localBounds;
-        private bool _localBoundsDirty;
+        private bool _localBoundsDirty = true;
         
         private int TotalSnowflakeArea => (int)(Snowflakes.Count * AverageFlakeArea * SourceRectArea);
 
         public Rectangle Bounds(bool local = false)
         {
+            if (!_localBoundsDirty)
+            {
+                if (local) return _localBounds;
+                var viewport = Game1.viewport;
+                if (Game1.game1.takingMapScreenshot) viewport = new xTile.Dimensions.Rectangle(0, 0, Game1.currentLocation?.PixelSize().Width ?? 0, Game1.currentLocation?.PixelSize().Height ?? 0);
+                return LocalToGlobal(viewport, _localBounds);
+            }
+            
             int gridWidth = GetGridCellWidth();
             int gridHeight = GetGridCellHeight();
             int cellX = CellId % 10;
@@ -190,16 +197,24 @@ public class SnowManager
                 width: gridWidth,
                 height: gridHeight
             );
-            var viewport = Game1.viewport;
-            if (Game1.game1.takingMapScreenshot) viewport = new xTile.Dimensions.Rectangle(0, 0, Game1.currentLocation?.PixelSize().Width ?? 0, Game1.currentLocation?.PixelSize().Height ?? 0);
-            return local ? localRectangle : LocalToGlobal(viewport, localRectangle);
+            var viewport2 = Game1.viewport;
+            if (Game1.game1.takingMapScreenshot) viewport2 = new xTile.Dimensions.Rectangle(0, 0, Game1.currentLocation?.PixelSize().Width ?? 0, Game1.currentLocation?.PixelSize().Height ?? 0);
+            _localBounds = localRectangle;
+            _localBoundsDirty = false;
+            return local ? _localBounds : LocalToGlobal(viewport2, _localBounds);
+        }
+
+        public void MarkBoundsDirty()
+        {
+            _localBoundsDirty = true;
         }
 
         private void AddSnowflake()
         {
             float xSpeed = -(float)(Game1.random.NextDouble() * 20.0 + 30.0);
             float ySpeed = (float)(Game1.random.NextDouble() * 20.0 + 10.0);
-            Vector2 position = new Vector2(Game1.random.Next(Bounds().Left, Bounds().Right), Game1.random.Next(Bounds().Top, Bounds().Bottom));
+            Rectangle bounds = Bounds();
+            Vector2 position = new Vector2(Game1.random.Next(bounds.Left, bounds.Right), Game1.random.Next(bounds.Top, bounds.Bottom));
             Vector2 speed = new Vector2(xSpeed, ySpeed);
             float scale = (float)(Game1.random.NextDouble() * 2.5f + 1f);
             float rotationSpeed = (float)(Game1.random.NextDouble() * 2.0 - 1.0);
@@ -279,7 +294,8 @@ public class SnowManager
 
         private float GetSnowflakeDensity()
         {
-            int cellArea = Bounds().Width * Bounds().Height;
+            Rectangle bounds = Bounds();
+            int cellArea = bounds.Width * bounds.Height;
             return TotalSnowflakeArea / (float)cellArea;
         }
 
@@ -310,22 +326,44 @@ public class SnowManager
             // b.DrawString(Game1.dialogueFont, countText, textPosition - new Vector2(2, -2), Color.Black, 0f, Vector2.Zero, 1f, SpriteEffects.None, 1f);
             // b.DrawString(Game1.dialogueFont, countText, textPosition, Color.White);
         }
+
+        private static int _gridCellWidth;
+        private static int _gridCellHeight;
+        private static bool _gridCellWidthDirty = true;
+        private static bool _gridCellHeightDirty = true;
         
         public static int GetGridCellWidth()
         {
-            if (Game1.game1.takingMapScreenshot) return Game1.currentLocation?.PixelSize().Width / 8 ?? 0;
-            return (ShouldPreviewSnow ? Game1.uiViewport.Width : Game1.viewport.Width) / 8;
+            if (!_gridCellWidthDirty) return _gridCellWidth;
+
+            if (Game1.game1.takingMapScreenshot) _gridCellWidth = Game1.currentLocation?.PixelSize().Width / 8 ?? 0;
+            else _gridCellWidth = (ShouldPreviewSnow ? Game1.uiViewport.Width : Game1.viewport.Width) / 8;
+            
+            _gridCellWidthDirty = false;
+            return _gridCellWidth;
         }
 
         public static int GetGridCellHeight()
         {
-            if (Game1.game1.takingMapScreenshot) return Game1.currentLocation?.PixelSize().Height / 5 ?? 0;
-            return (ShouldPreviewSnow ? Game1.uiViewport.Height : Game1.viewport.Height) / 5;
+            if (!_gridCellHeightDirty) return _gridCellHeight;
+            
+            if (Game1.game1.takingMapScreenshot) _gridCellHeight = Game1.currentLocation?.PixelSize().Height / 5 ?? 0;
+            else _gridCellHeight = (ShouldPreviewSnow ? Game1.uiViewport.Height : Game1.viewport.Height) / 5;
+            
+            _gridCellHeightDirty = false;
+            return _gridCellHeight;
+        }
+        
+        public static void MarkGridCellSizeDirty()
+        {
+            _gridCellWidthDirty = true;
+            _gridCellHeightDirty = true;
         }
     }
 
     private readonly Dictionary<int, SnowflakeCell> SnowflakeGrid = [];
     
+    #region Configuration Variables
     private float? _targetDensity;
     public float TargetDensity
     {
@@ -447,8 +485,11 @@ public class SnowManager
         get => _fogAlpha ??= ModEntry.Config.FogColour.A / 255f;
         set => _fogAlpha = value;
     }
+    #endregion
     
     private static bool ShouldPreviewSnow => ModEntry.IsConfiguring();
+
+    private bool _didJustScreenshot = false;
 
 
     public SnowManager()
@@ -467,10 +508,12 @@ public class SnowManager
 
     public void ResetCells(bool clearSnowflakes = true, bool changeSeed = false)
     {
+        SnowflakeCell.MarkGridCellSizeDirty();
         foreach (var cell in SnowflakeGrid.Values)
         {
             if (clearSnowflakes) cell.ClearSnowflakes();
             cell.ResetInitialFill();
+            cell.MarkBoundsDirty();
         }
         if (changeSeed) Snowflake.Noise.SetSeed(Game1.random.Next());
     }
@@ -509,12 +552,19 @@ public class SnowManager
             b.End();
             b.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp);
         }
+        
+        if (Game1.game1.takingMapScreenshot)
+        {
+            _didJustScreenshot = true;
+            SnowflakeCell.MarkGridCellSizeDirty();
+        }
 
         for (int i = 0, n = SnowflakeGrid.Count; i < n; i++)
         {
             // I don't like having to do this in Draw() but the function that takes the screenshot doesn't update things first.
-            if (Game1.game1.takingMapScreenshot)
+            if (_didJustScreenshot)
             {
+                SnowflakeGrid[i].MarkBoundsDirty();
                 SnowflakeGrid[i].ResetInitialFill();
                 SnowflakeGrid[i].Update();
             }
@@ -531,6 +581,12 @@ public class SnowManager
     public void Update()
     {
         if (!ShouldSnowHere()) return;
+
+        if (_didJustScreenshot)
+        {
+            ResetCells();
+            _didJustScreenshot = false;
+        }
         
         var tickParity = HighFramerate ? 0 : (int)(Game1.currentGameTime.TotalGameTime.Ticks % 2);
         var increment = HighFramerate ? 1 : 2;
