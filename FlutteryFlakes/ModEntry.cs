@@ -89,7 +89,10 @@ namespace FlutteryFlakes
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
             ScreenSnowManager.Value?.Update();
-            if (IsConfiguring()) PreviewManager.Value?.Update();
+            if (IsConfiguring())
+            {
+                PreviewManager.Value?.Update();
+            }
             else if (!IsConfiguring(false)) PreviewManager.Value = null;
         }
 

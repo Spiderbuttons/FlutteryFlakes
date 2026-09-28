@@ -492,7 +492,7 @@ public class SnowManager
     private static bool ShouldPreviewSnow => ModEntry.IsConfiguring();
 
     private bool _didJustScreenshot;
-
+    private bool _didJustStartConfiguring;
 
     public SnowManager()
     {
@@ -583,6 +583,13 @@ public class SnowManager
     public void Update()
     {
         if (!ShouldSnowHere()) return;
+
+        if (!_didJustStartConfiguring && ShouldPreviewSnow)
+        {
+            _didJustStartConfiguring = true;
+            ResetCells();
+            SnowflakeCell.MarkGridCellSizeDirty();
+        }
 
         if (_didJustScreenshot)
         {
