@@ -3,7 +3,7 @@ using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 
-namespace FlutterySnowfall.Helpers;
+namespace FlutteryFlakes.Helpers;
 
 public static class AverageDebugTimings
 {

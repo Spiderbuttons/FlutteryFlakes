@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <AssemblyName>FlutterySnowfall</AssemblyName>
-        <RootNamespace>FlutterySnowfall</RootNamespace>
+        <AssemblyName>FlutteryFlakes</AssemblyName>
+        <RootNamespace>FlutteryFlakes</RootNamespace>
         <Version>1.0.0</Version>
         <TargetFramework>net6.0</TargetFramework>
         <LangVersion>Latest</LangVersion>
@@ -11,8 +11,8 @@
         <EnableHarmony>true</EnableHarmony>
         <EnableModDeploy>true</EnableModDeploy>
         <EnableModZip>true</EnableModZip>
-        <ModFolderName>FlutterySnowfall</ModFolderName>
-        <Title>FlutterySnowfall</Title>
+        <ModFolderName>FlutteryFlakes</ModFolderName>
+        <Title>FlutteryFlakes</Title>
         <Authors>Spiderbuttons</Authors>
         <Nullable>enable</Nullable>
     </PropertyGroup>

@@ -1,10 +1,10 @@
 ﻿using System;
-using FlutterySnowfall.Helpers;
+using FlutteryFlakes.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 
-namespace FlutterySnowfall;
+namespace FlutteryFlakes;
 
 public static class Problometer
 {

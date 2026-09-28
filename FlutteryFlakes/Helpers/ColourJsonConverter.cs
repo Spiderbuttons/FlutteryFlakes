@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 
-namespace FlutterySnowfall.Helpers;
+namespace FlutteryFlakes.Helpers;
 
 public class ColourConverter : JsonConverter<Color>
 {

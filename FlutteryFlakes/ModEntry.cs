@@ -4,15 +4,15 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using GenericModConfigMenu;
-using FlutterySnowfall.Config;
-using FlutterySnowfall.Helpers;
+using FlutteryFlakes.Config;
+using FlutteryFlakes.Helpers;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Mods;
 
-namespace FlutterySnowfall
+namespace FlutteryFlakes
 {
     internal sealed class ModEntry : Mod
     {

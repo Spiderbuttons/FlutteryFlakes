@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using FlutterySnowfall.Extensions;
-using FlutterySnowfall.Helpers;
+using FlutteryFlakes.Extensions;
+using FlutteryFlakes.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -9,7 +9,7 @@ using StardewValley;
 using StardewValley.Extensions;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
-namespace FlutterySnowfall;
+namespace FlutteryFlakes;
 
 public class SnowManager
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-namespace FlutterySnowfall.Extensions
+namespace FlutteryFlakes.Extensions
 {
     public static class SpriteBatchExtensions
     {

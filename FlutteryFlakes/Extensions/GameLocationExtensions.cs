@@ -1,7 +1,7 @@
 ﻿using StardewValley;
 using xTile.Dimensions;
 
-namespace FlutterySnowfall.Extensions
+namespace FlutteryFlakes.Extensions
 {
     public static class GameLocationExtensions
     {

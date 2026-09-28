@@ -1,5 +1,5 @@
 ﻿using System;
-using FlutterySnowfall.Helpers;
+using FlutteryFlakes.Helpers;
 using GenericModConfigMenu;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
@@ -7,7 +7,7 @@ using StardewModdingAPI;
 using StardewValley;
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace FlutterySnowfall.Config;
+namespace FlutteryFlakes.Config;
 
 public sealed class ModConfig
 {

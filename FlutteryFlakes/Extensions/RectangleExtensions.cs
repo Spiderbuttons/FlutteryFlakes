@@ -3,7 +3,7 @@ using StardewValley;
 using xTile.Dimensions;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
-namespace FlutterySnowfall.Extensions
+namespace FlutteryFlakes.Extensions
 {
     public static class RectangleExtensions
     {

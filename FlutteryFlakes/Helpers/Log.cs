@@ -9,7 +9,7 @@ using HarmonyLib;
 // ReSharper disable PossibleMultipleEnumeration
 // ReSharper disable once RedundantArgumentDefaultValue
 
-namespace FlutterySnowfall.Helpers;
+namespace FlutteryFlakes.Helpers;
 
 public static class Log
 {
