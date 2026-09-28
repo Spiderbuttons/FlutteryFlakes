@@ -16,12 +16,12 @@ namespace FlutterySnowfall
 {
     internal sealed class ModEntry : Mod
     {
-        internal static string UNIQUE_ID => Manifest.UniqueID;
+        private static string UNIQUE_ID => Manifest.UniqueID;
         
-        internal static IModHelper ModHelper { get; set; } = null!;
+        internal static IModHelper ModHelper { get; private set; } = null!;
         private static IManifest Manifest { get; set; } = null!;
-        internal static IMonitor ModMonitor { get; set; } = null!;
-        internal static ModConfig Config { get; set; } = null!;
+        internal static IMonitor ModMonitor { get; private set; } = null!;
+        internal static ModConfig Config { get; private set; } = null!;
         private static Harmony Harmony { get; set; } = null!;
 
         private static IGenericModConfigMenuApi? GMCM;

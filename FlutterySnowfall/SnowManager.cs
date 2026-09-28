@@ -17,7 +17,9 @@ public class SnowManager
     {
         get
         {
-            field ??= ModEntry.ModHelper.ModContent.Load<Texture2D>("assets/snow.png");
+            if (field is not null) return field;
+            field = ModEntry.ModHelper.ModContent.Load<Texture2D>("assets/snow.png");
+            field.Name = null;
             return field;
         }
     }
@@ -44,7 +46,7 @@ public class SnowManager
 
         private int GridCellKey = -1;
         
-        public Vector2 Position;
+        private Vector2 Position;
         private float Rotation;
         
         private readonly float _scale;
@@ -78,7 +80,7 @@ public class SnowManager
             CalculateGridCellKey();
         }
 
-        public void CalculateGridCellKey()
+        private void CalculateGridCellKey()
         {
             int gridWidth = SnowflakeCell.GetGridCellWidth();
             int gridHeight = SnowflakeCell.GetGridCellHeight();
@@ -489,7 +491,7 @@ public class SnowManager
     
     private static bool ShouldPreviewSnow => ModEntry.IsConfiguring();
 
-    private bool _didJustScreenshot = false;
+    private bool _didJustScreenshot;
 
 
     public SnowManager()

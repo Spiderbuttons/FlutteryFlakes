@@ -4,6 +4,7 @@ using GenericModConfigMenu;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace FlutterySnowfall.Config;
 
