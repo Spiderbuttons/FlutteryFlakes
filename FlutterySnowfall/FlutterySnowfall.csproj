@@ -33,6 +33,12 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Reference Include="Newtonsoft.Json" Private="False">
+            <HintPath>$(GamePath)\smapi-internal\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.*"/>
         <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.2.1"/>
         <PackageReference Include="Krafs.Publicizer" Version="2.3.0">

@@ -2,6 +2,7 @@
 using FlutterySnowfall.Helpers;
 using GenericModConfigMenu;
 using Microsoft.Xna.Framework;
+using Newtonsoft.Json;
 using StardewModdingAPI;
 using StardewValley;
 // ReSharper disable MemberCanBePrivate.Global
@@ -22,8 +23,10 @@ public sealed class ModConfig
     public bool HighFramerate { get; set; }
     public bool PixelatedSnowflakes { get; set; } = true;
     
+    [JsonConverter(typeof(ColourConverter))]
     public Color SnowflakeColour { get; set; } = new(238, 238, 255);
     public int SnowflakeColourVariance { get; set; } = 20;
+    [JsonConverter(typeof(ColourConverter))]
     public Color FogColour { get; set; } = new(240, 248, 255, 38);
 
     public ModConfig()
@@ -143,8 +146,8 @@ public sealed class ModConfig
         
         configMenu.AddComplexOption(
             mod: ModManifest,
-            name: () => "Performance Impact",
-            tooltip: () => "Measures how close you are to no longer being able to reach 60 FPS.",
+            name: i18n.Config_PerformanceImpact_Name,
+            tooltip: i18n.Config_PerformanceImpact_Tooltip,
             draw: Problometer.Draw,
             beforeMenuOpened: () => Game1.debugTimings.Active = true,
             beforeMenuClosed: () => Game1.debugTimings.Active = false,
@@ -154,8 +157,8 @@ public sealed class ModConfig
         
         configMenu.AddBoolOption(
             mod: ModManifest,
-            name: () => "Preview",
-            tooltip: () => "If enabled, snowflakes will be shown in this config menu.",
+            name: i18n.Config_Preview_Name,
+            tooltip: i18n.Config_Preview_Tooltip,
             getValue: () => PreviewSnowflakes,
             setValue: value => PreviewSnowflakes = value,
             fieldId: "PreviewSnowflakes"
@@ -163,8 +166,8 @@ public sealed class ModConfig
 
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snow Density",
-            tooltip: () => "The approximate percentage of the screen covered by snow during snowy weather. Higher density incurs a higher performance cost.",
+            name: i18n.Config_SnowDensity_Name,
+            tooltip: i18n.Config_SnowDensity_Tooltip,
             getValue: () => SnowDensity,
             setValue: value => SnowDensity = value,
             min: 0.01f,
@@ -176,8 +179,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snow Density Variance",
-            tooltip: () => "How much the snow density can randomly increase or decrease from your chosen snow density setting on any given day.",
+            name: i18n.Config_SnowDensityVariance_Name,
+            tooltip: i18n.Config_SnowDensityVariance_Tooltip,
             getValue: () => SnowDensityVariance,
             setValue: value => SnowDensityVariance = value,
             min: 0f,
@@ -189,8 +192,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snowflake Scale",
-            tooltip: () => "A multiplier for the size of snowflakes. Higher values will make snowflakes larger.",
+            name: i18n.Config_SnowflakeScale_Name,
+            tooltip: i18n.Config_SnowflakeScale_Tooltip,
             getValue: () => ScaleMultiplier,
             setValue: value => ScaleMultiplier = value,
             min: 0.1f,
@@ -202,8 +205,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snowflake Scale Variance",
-            tooltip: () => "How much the scale of snowflakes can randomly increase or decrease from your chosen scale setting on any given day.",
+            name: i18n.Config_SnowflakeScaleVariance_Name,
+            tooltip: i18n.Config_SnowflakeScaleVariance_Tooltip,
             getValue: () => ScaleVariance,
             setValue: value => ScaleVariance = value,
             min: 0f,
@@ -215,8 +218,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Wind Speed",
-            tooltip: () => "A multiplier for the speed of the implied wind. Higher values will make snowflakes move faster.",
+            name: i18n.Config_WindSpeed_Name,
+            tooltip: i18n.Config_WindSpeed_Tooltip,
             getValue: () => WindSpeedMultiplier,
             setValue: value => WindSpeedMultiplier = value,
             min: 0.1f,
@@ -228,8 +231,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Wind Speed Variance",
-            tooltip: () => "How much the wind speed can randomly increase or decrease from your chosen wind speed setting on any given day.",
+            name: i18n.Config_WindSpeedVariance_Name,
+            tooltip: i18n.Config_WindSpeedVariance_Tooltip,
             getValue: () => WindSpeedVariance,
             setValue: value => WindSpeedVariance = value,
             min: 0f,
@@ -241,8 +244,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Rotation Speed",
-            tooltip: () => "A multiplier for the speed of a snowflake's rotation. Higher values will make snowflakes rotate faster.",
+            name: i18n.Config_RotationSpeed_Name,
+            tooltip: i18n.Config_RotationSpeed_Tooltip,
             getValue: () => RotationSpeedMultiplier,
             setValue: value => RotationSpeedMultiplier = value,
             min: 0f,
@@ -254,21 +257,22 @@ public sealed class ModConfig
         
         configMenu.AddTextOption(
             mod: ModManifest,
-            name: () => "Snowflake Movement",
-            tooltip: () => "Determines how the snowflakes move across the screen.",
+            name: i18n.Config_SnowflakeMovement_Name,
+            tooltip: i18n.Config_SnowflakeMovement_Tooltip,
             getValue: () => MovementType.ToString(),
             setValue: value =>
             {
                 MovementType = Enum.TryParse(value, out SnowManager.MovementType movementType) ? movementType : SnowManager.MovementType.Noisy;
             },
             allowedValues: Enum.GetNames(typeof(SnowManager.MovementType)),
+            formatAllowedValue: value => i18n.GetByKey($"Config.SnowflakeMovement.{value}"),
             fieldId: "MovementType"
         );
         
         configMenu.AddBoolOption(
             mod: ModManifest,
-            name: () => "High Framerate",
-            tooltip: () => "If enabled, snowflakes will be updated at a higher framerate. This may or may not improve visual smoothness, but will incur a higher performance cost.",
+            name: i18n.Config_HighFramerate_Name,
+            tooltip: i18n.Config_HighFramerate_Tooltip,
             getValue: () => HighFramerate,
             setValue: value => HighFramerate = value,
             fieldId: "HighFramerate"
@@ -276,8 +280,8 @@ public sealed class ModConfig
         
         configMenu.AddBoolOption(
             mod: ModManifest,
-            name: () => "Pixelated Snowflakes",
-            tooltip: () => "If enabled, snowflakes will be drawn pixelated like the rest of the game. If disabled, they will be drawn with a smoother, non-pixelated look.",
+            name: i18n.Config_PixelatedSnowflakes_Name,
+            tooltip: i18n.Config_PixelatedSnowflakes_Tooltip,
             getValue: () => PixelatedSnowflakes,
             setValue: value => PixelatedSnowflakes = value,
             fieldId: "PixelatedSnowflakes"
@@ -286,20 +290,20 @@ public sealed class ModConfig
         configMenu.AddPageLink(
             mod: ModManifest,
             pageId: "ColourSettings",
-            text: () => "Colour Settings",
-            tooltip: () => "Configure the colours of the snowflakes and fog."
+            text: i18n.Config_ColourSettings_Name,
+            tooltip: i18n.Config_ColourSettings_Tooltip
         );
         
         configMenu.AddPage(
             mod: ModManifest,
             pageId: "ColourSettings",
-            pageTitle: () => "Colour Settings"
+            pageTitle: i18n.Config_ColourSettings_Name
         );
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snowflake Red",
-            tooltip: () => "The red component of the snowflake colour.",
+            name: i18n.Config_SnowflakeRed_Name,
+            tooltip: i18n.Config_SnowflakeRed_Tooltip,
             getValue: () => SnowflakeColour.R,
             setValue: value => SnowflakeColour = new Color((byte)value, SnowflakeColour.G, SnowflakeColour.B, SnowflakeColour.A),
             min: 0,
@@ -310,8 +314,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snowflake Green",
-            tooltip: () => "The green component of the snowflake colour.",
+            name: i18n.Config_SnowflakeGreen_Name,
+            tooltip: i18n.Config_SnowflakeGreen_Tooltip,
             getValue: () => SnowflakeColour.G,
             setValue: value => SnowflakeColour = new Color(SnowflakeColour.R, (byte)value, SnowflakeColour.B, SnowflakeColour.A),
             min: 0,
@@ -322,8 +326,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snowflake Blue",
-            tooltip: () => "The blue component of the snowflake colour.",
+            name: i18n.Config_SnowflakeBlue_Name,
+            tooltip: i18n.Config_SnowflakeBlue_Tooltip,
             getValue: () => SnowflakeColour.B,
             setValue: value => SnowflakeColour = new Color(SnowflakeColour.R, SnowflakeColour.G, (byte)value, SnowflakeColour.A),
             min: 0,
@@ -334,8 +338,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snowflake Alpha",
-            tooltip: () => "The alpha (transparency) component of the snowflake colour.",
+            name: i18n.Config_SnowflakeAlpha_Name,
+            tooltip: i18n.Config_SnowflakeAlpha_Tooltip,
             getValue: () => SnowflakeColour.A / 255f,
             setValue: value => SnowflakeColour = new Color(SnowflakeColour.R, SnowflakeColour.G, SnowflakeColour.B, (byte)(value * 255f)),
             min: 0f,
@@ -347,8 +351,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Snowflake Colour Variance",
-            tooltip: () => "How much two snowflakes can randomly differ from each other in colour.",
+            name: i18n.Config_SnowflakeColourVariance_Name,
+            tooltip: i18n.Config_SnowflakeColourVariance_Tooltip,
             getValue: () => SnowflakeColourVariance,
             setValue: value => SnowflakeColourVariance = value,
             min: 0,
@@ -359,8 +363,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Fog Red",
-            tooltip: () => "The red component of the fog colour.",
+            name: i18n.Config_FogRed_Name,
+            tooltip: i18n.Config_FogRed_Tooltip,
             getValue: () => FogColour.R,
             setValue: value => FogColour = new Color((byte)value, FogColour.G, FogColour.B, FogColour.A),
             min: 0,
@@ -371,8 +375,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Fog Green",
-            tooltip: () => "The green component of the fog colour.",
+            name: i18n.Config_FogGreen_Name,
+            tooltip: i18n.Config_FogGreen_Tooltip,
             getValue: () => FogColour.G,
             setValue: value => FogColour = new Color(FogColour.R, (byte)value, FogColour.B, FogColour.A),
             min: 0,
@@ -383,8 +387,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Fog Blue",
-            tooltip: () => "The blue component of the fog colour.",
+            name: i18n.Config_FogBlue_Name,
+            tooltip: i18n.Config_FogBlue_Tooltip,
             getValue: () => FogColour.B,
             setValue: value => FogColour = new Color(FogColour.R, FogColour.G, (byte)value, FogColour.A),
             min: 0,
@@ -395,8 +399,8 @@ public sealed class ModConfig
         
         configMenu.AddNumberOption(
             mod: ModManifest,
-            name: () => "Fog Alpha",
-            tooltip: () => "The alpha (transparency) component of the fog colour.",
+            name: i18n.Config_FogAlpha_Name,
+            tooltip: i18n.Config_FogAlpha_Tooltip,
             getValue: () => FogColour.A / 255f,
             setValue: value => FogColour = new Color(FogColour.R, FogColour.G, FogColour.B, (byte)(value * 255f)),
             min: 0f,

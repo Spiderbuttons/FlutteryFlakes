@@ -24,6 +24,8 @@ public static class Problometer
         new(237,  19,  0)
     ];
     
+    private static readonly string PreviewText = i18n.Problemeter_PreviewFirst();
+    
     public static void Draw(SpriteBatch b, Vector2 position)
     {
         double avgUpdate = AverageDebugTimings.UpdateTimingAverage;
@@ -54,11 +56,10 @@ public static class Problometer
 
         if (!isPreviewing)
         {
-            const string text = "Enable Preview first!";
-            Vector2 textSize = Game1.dialogueFont.MeasureString(text);
+            Vector2 textSize = Game1.dialogueFont.MeasureString(PreviewText);
             Vector2 textPosition = new Vector2(position.X + maxBarWidth / 2 - textSize.X / 2, position.Y + barHeight / 2f - textSize.Y / 2.5f);
-            b.DrawString(Game1.dialogueFont, text, textPosition - new Vector2(2, -2), Color.Black * 0.6f);
-            b.DrawString(Game1.dialogueFont, text, textPosition, Color.White);
+            b.DrawString(Game1.dialogueFont, PreviewText, textPosition - new Vector2(2, -2), Color.Black * 0.6f);
+            b.DrawString(Game1.dialogueFont, PreviewText, textPosition, Color.White);
         }
 
         b.DrawString(Game1.dialogueFont, $"{totalAvg:F2} ms/f", position + new Vector2(maxBarWidth + 5, 0) - new Vector2(3, -3), Color.Black * 0.2f);

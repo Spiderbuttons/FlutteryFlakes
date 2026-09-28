@@ -1,3 +1,72 @@
 ﻿{
-  "Key": "Value"
+  "Problemeter.PreviewFirst": "Enable preview first!",
+  
+  "Config.PerformanceImpact.Name": "Performance Impact",
+  "Config.PerformanceImpact.Tooltip": "Measures how close you are to no longer being able to reach 60 FPS.",
+  
+  "Config.Preview.Name": "Preview",
+  "Config.Preview.Tooltip": "If enabled, snowflakes will be shown in this config menu.",
+  
+  "Config.SnowDensity.Name": "Snow Density",
+  "Config.SnowDensity.Tooltip": "The approximate percentage of the screen covered by snow during snowy weather. Higher density incurs a higher performance cost.",
+  
+  "Config.SnowDensityVariance.Name": "Snow Density Variance",
+  "Config.SnowDensityVariance.Tooltip": "How much the snow density can randomly increase or decrease from your chosen snow density setting on any given day.",
+  
+  "Config.SnowflakeScale.Name": "Snowflake Scale",
+  "Config.SnowflakeScale.Tooltip": "A multiplier for the size of snowflakes. Higher values will make snowflakes larger.",
+  
+  "Config.SnowflakeScaleVariance.Name": "Snowflake Scale Variance",
+  "Config.SnowflakeScaleVariance.Tooltip": "How much the scale of snowflakes can randomly increase or decrease from your chosen scale setting on any given day.",
+  
+  "Config.WindSpeed.Name": "Wind Speed",
+  "Config.WindSpeed.Tooltip": "A multiplier for the speed of the implied wind. Higher values will make the snowflakes move faster.",
+  
+  "Config.WindSpeedVariance.Name": "Wind Speed Variance",
+  "Config.WindSpeedVariance.Tooltip": "How much the wind speed can randomly increase or decrease from your chosen wind speed setting on any given day.",
+  
+  "Config.RotationSpeed.Name": "Rotation Speed",
+  "Config.RotationSpeed.Tooltip": "A multiplier for the speed of a snowflake's rotation. Higher values will make snowflakes rotate faster.",
+  
+  "Config.SnowflakeMovement.Name": "Snowflake Movement",
+  "Config.SnowflakeMovement.Tooltip": "Determines how the snowflakes move across the screen. Listed in order of increasing performance cost.",
+  "Config.SnowflakeMovement.Consistent": "Consistent",
+  "Config.SnowflakeMovement.Varied": "Varied",
+  "Config.SnowflakeMovement.Noisy": "Noisy",
+  
+  "Config.HighFramerate.Name": "High Framerate",
+  "Config.HighFramerate.Tooltip": "If enabled, snowflakes will be updated at a higher framerate. This may or may not improve the visual smoothness to you, but it will incur a higher performance cost.",
+  
+  "Config.PixelatedSnowflakes.Name": "Pixelated Snowflakes",
+  "Config.PixelatedSnowflakes.Tooltip": "If enabled, snowflakes will be drawn pixelated like the rest of the game. If disabled, they will be drawn with a smoother (and blurrier) non-pixelated look.",
+  
+  "Config.ColourSettings.Name": "Colour Settings",
+  "Config.ColourSettings.Tooltip": "Configure the colours of the snowflakes and fog.",
+  
+  "Config.SnowflakeRed.Name": "Snowflake Red",
+  "Config.SnowflakeRed.Tooltip": "The red component of the snowflake colour.",
+  
+  "Config.SnowflakeGreen.Name": "Snowflake Green",
+  "Config.SnowflakeGreen.Tooltip": "The green component of the snowflake colour.",
+  
+  "Config.SnowflakeBlue.Name": "Snowflake Blue",
+  "Config.SnowflakeBlue.Tooltip": "The blue component of the snowflake colour.",
+  
+  "Config.SnowflakeAlpha.Name": "Snowflake Alpha",
+  "Config.SnowflakeAlpha.Tooltip": "The alpha (transparency) component of the snowflake colour.",
+  
+  "Config.SnowflakeColourVariance.Name": "Snowflake Colour Variance",
+  "Config.SnowflakeColourVariance.Tooltip": "How much two snowflakes can randomly differ from each other in colour.",
+  
+  "Config.FogRed.Name": "Fog Red",
+  "Config.FogRed.Tooltip": "The red component of the fog colour.",
+  
+  "Config.FogGreen.Name": "Fog Green",
+  "Config.FogGreen.Tooltip": "The green component of the fog colour.",
+  
+  "Config.FogBlue.Name": "Fog Blue",
+  "Config.FogBlue.Tooltip": "The blue component of the fog colour.",
+  
+  "Config.FogAlpha.Name": "Fog Alpha",
+  "Config.FogAlpha.Tooltip": "The alpha (transparency) component of the fog colour.",
 }
