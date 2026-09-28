@@ -29,6 +29,8 @@ namespace FlutteryFlakes
         internal static readonly PerScreen<SnowManager?> ScreenSnowManager = new();
         internal static readonly PerScreen<SnowManager?> PreviewManager = new();
 
+        private static bool _isConfiguring;
+
         public override void Entry(IModHelper helper)
         {
             i18n.Init(helper.Translation);
@@ -58,9 +60,9 @@ namespace FlutteryFlakes
             Helper.Events.Display.MenuChanged += OnMenuChanged;
         }
 
-        internal static bool IsConfiguring(bool checkForPreview = true)
+        internal static bool IsConfiguring(bool checkForPreview = true, bool forceNewCheck = false)
         {
-            return GMCM?.TryGetCurrentMenu(out IManifest? mod, out _) == true && mod?.UniqueID == UNIQUE_ID && (!checkForPreview || Config.PreviewSnowflakes);
+            return (!forceNewCheck && _isConfiguring) || GMCM?.TryGetCurrentMenu(out IManifest? mod, out _) == true && mod?.UniqueID == UNIQUE_ID && (!checkForPreview || Config.PreviewSnowflakes);
         }
 
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
@@ -89,11 +91,17 @@ namespace FlutteryFlakes
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
             ScreenSnowManager.Value?.Update();
-            if (IsConfiguring())
+            if (IsConfiguring(forceNewCheck: true))
             {
+                _isConfiguring = true;
                 PreviewManager.Value?.Update();
             }
-            else if (!IsConfiguring(false)) PreviewManager.Value = null;
+            else if (_isConfiguring && !IsConfiguring(forceNewCheck: true))
+            {
+                _isConfiguring = false;
+                PreviewManager.Value = null;
+                ScreenSnowManager.Value?.ResetCells(false);
+            }
         }
 
         private void OnRenderedStep(object? sender, RenderedStepEventArgs e)

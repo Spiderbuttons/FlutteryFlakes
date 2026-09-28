@@ -542,8 +542,8 @@ public class SnowManager
 
         if (FogColour.A > 0)
         {
-            int width = Game1.game1.takingMapScreenshot ? Game1.currentLocation?.PixelSize().Width ?? 0 : Game1.viewport.Width;
-            int height = Game1.game1.takingMapScreenshot ? Game1.currentLocation?.PixelSize().Height ?? 0 : Game1.viewport.Height;
+            int width = Game1.game1.takingMapScreenshot ? Game1.currentLocation?.PixelSize().Width ?? 0 : Game1.graphics.GraphicsDevice.Viewport.Width;
+            int height = Game1.game1.takingMapScreenshot ? Game1.currentLocation?.PixelSize().Height ?? 0 : Game1.graphics.GraphicsDevice.Viewport.Height;
             b.Draw(Game1.staminaRect, new Rectangle(0, 0, width, height), FogColour * FogAlpha);
         }
         
